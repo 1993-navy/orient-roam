@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Amap diagnostic</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; }
+    #log { padding: 12px; font: 13px/1.5 monospace; white-space: pre-wrap; background: #f5f5f5; }
+    #map { height: 320px; width: 100%; background: #e5e7eb; }
+    .ok { color: #16a34a; } .bad { color: #dc2626; }
+  </style>
+</head>
+<body>
+  <div id="log">Amap diagnostic — loading…</div>
+  <div id="map"></div>
+  <script>
+    var log = document.getElementById('log');
+    function L(m, cls) { var s = document.createElement('div'); if (cls) s.className = cls; s.textContent = m; log.appendChild(s); }
+
+    // Capture any console errors (Amap reports auth failures there).
+    var oerr = console.error;
+    console.error = function () { L('console.error: ' + Array.prototype.join.call(arguments, ' '), 'bad'); oerr.apply(console, arguments); };
+    window.onerror = function (m) { L('window.error: ' + m, 'bad'); };
+
+    var KEY = '299d7331c4e521dc44f5c5e9e0768d75';
+    var SCODE = '69abfb75dc60ba43658286b726ede012';
+
+    L('host = ' + location.host);
+    window._AMapSecurityConfig = { securityJsCode: SCODE };
+
+    var s = document.createElement('script');
+    s.src = 'https://webapi.amap.com/maps?v=2.0&key=' + KEY;
+    s.onload = function () {
+      L('✓ loader script loaded', 'ok');
+      try {
+        var map = new AMap.Map('map', { zoom: 11, center: [116.397, 39.918] });
+        L('✓ AMap.Map created (version ' + (AMap.version || '?') + ')', 'ok');
+        map.on('complete', function () { L('✅ MAP COMPLETE — tiles rendered OK', 'ok'); });
+        map.on('error', function (e) { L('map error event: ' + JSON.stringify(e), 'bad'); });
+      } catch (e) {
+        L('✗ create error: ' + e.message, 'bad');
+      }
+    };
+    s.onerror = function () { L('✗ loader script FAILED to load (network/key)', 'bad'); };
+    document.head.appendChild(s);
+
+    setTimeout(function () { L('— 12s elapsed; if no "MAP COMPLETE" above, see the error lines —'); }, 12000);
+  </script>
+</body>
+</html>

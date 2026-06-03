@@ -1,0 +1,201 @@
+// Orient Roam — data model
+//
+// Dev uses SQLite. To deploy on PostgreSQL, change `provider` below to
+// "postgresql" and point DATABASE_URL at your Postgres instance — every model
+// here is portable (we avoid Prisma enums / scalar lists, which SQLite lacks,
+// using String fields with documented allowed values instead).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------- Users -----------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  avatarUrl    String?
+  bio          String?
+  homeCountry  String? // e.g. "United States"
+  languages    String? // comma-separated, e.g. "en,zh,es"
+  createdAt    DateTime @default(now())
+
+  reviews            Review[]
+  favorites          Favorite[]
+  sentMessages       Message[]            @relation("MessageSender")
+  conversations      ConversationMember[]
+  ownedCommunities   Community[]          @relation("CommunityOwner")
+  communityMembers   CommunityMember[]
+  hostedMeetups      Meetup[]             @relation("MeetupHost")
+  meetupParticipants MeetupParticipant[]
+}
+
+// ----------------------------- Places ----------------------------
+
+model City {
+  id          String  @id @default(cuid())
+  name        String // 中文名
+  nameEn      String // English name
+  province    String
+  lat         Float
+  lng         Float
+  summary     String?
+  coverImage  String?
+
+  places      Place[]
+  communities Community[]
+  meetups     Meetup[]
+}
+
+model Place {
+  id          String  @id @default(cuid())
+  name        String // 中文名
+  nameEn      String // English name
+  // category: one of FOOD | ATTRACTION | HOTEL | NATURE | NIGHTLIFE | SHOPPING
+  category    String
+  cityId      String
+  city        City    @relation(fields: [cityId], references: [id])
+  address     String?
+  lat         Float
+  lng         Float
+  description String?
+  coverImage  String?
+  priceLevel  Int     @default(2) // 1..4 ($ .. $$$$)
+
+  // Cached recommendation aggregates (recomputed on each review write).
+  avgRating   Float   @default(0)
+  reviewCount Int     @default(0)
+  weightScore Float   @default(0) // Bayesian-weighted score; sort recommendations by this
+
+  createdAt DateTime @default(now())
+
+  reviews   Review[]
+  favorites Favorite[]
+  meetups   Meetup[]
+
+  @@index([cityId, category])
+  @@index([weightScore])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  placeId   String
+  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  rating    Int // 1..5
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, placeId]) // one review per user per place (updatable)
+  @@index([placeId])
+}
+
+model Favorite {
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, placeId])
+}
+
+// --------------------------- Messaging ---------------------------
+
+model Conversation {
+  id        String   @id @default(cuid())
+  isGroup   Boolean  @default(false)
+  title     String? // for group chats
+  createdAt DateTime @default(now())
+
+  members  ConversationMember[]
+  messages Message[]
+}
+
+model ConversationMember {
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @default("member") // member | admin
+  joinedAt       DateTime     @default(now())
+
+  @@id([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  body           String
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// -------------------- Communities & Meetups ----------------------
+
+model Community {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  cityId      String?
+  city        City?    @relation(fields: [cityId], references: [id])
+  ownerId     String
+  owner       User     @relation("CommunityOwner", fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+
+  members CommunityMember[]
+}
+
+model CommunityMember {
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt    DateTime  @default(now())
+
+  @@id([communityId, userId])
+}
+
+// Meetup = 搭子 / 拼单 / 拼饭
+model Meetup {
+  id          String    @id @default(cuid())
+  // type: MEAL (拼饭) | SHOPPING (拼单) | TRIP (搭子/同游)
+  type        String
+  title       String
+  description String?
+  cityId      String?
+  city        City?     @relation(fields: [cityId], references: [id])
+  placeId     String?
+  place       Place?    @relation(fields: [placeId], references: [id])
+  hostId      String
+  host        User      @relation("MeetupHost", fields: [hostId], references: [id])
+  startTime   DateTime?
+  maxPeople   Int       @default(4)
+  status      String    @default("open") // open | full | closed
+  createdAt   DateTime  @default(now())
+
+  participants MeetupParticipant[]
+}
+
+model MeetupParticipant {
+  meetupId String
+  meetup   Meetup   @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status   String   @default("joined") // joined | left
+  joinedAt DateTime @default(now())
+
+  @@id([meetupId, userId])
+}
