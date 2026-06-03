@@ -1,0 +1,13 @@
+# Netlify build configuration for Orient Roam (Next.js + Prisma).
+# The official Next.js plugin handles SSR / route handlers via Netlify Functions.
+
+[build]
+  # Our build script runs `prisma generate` before `next build`.
+  command = "npm run build"
+
+[build.environment]
+  # Prisma needs a fixed binary target on Netlify's build image.
+  PRISMA_CLIENT_ENGINE_TYPE = "library"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
