@@ -6,12 +6,17 @@
 // using String fields with documented allowed values instead).
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" for local dev; the rhel targets cover Netlify Functions (AWS Lambda).
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "rhel-openssl-1.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+  // Injected automatically by Netlify's Neon database extension at build &
+  // function runtime. Using the unpooled (direct) URL keeps Prisma simple
+  // (no PgBouncer prepared-statement caveats) — fine for MVP traffic.
+  url      = env("NETLIFY_DATABASE_URL_UNPOOLED")
 }
 
 // ----------------------------- Users -----------------------------

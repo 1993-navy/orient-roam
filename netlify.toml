@@ -2,8 +2,9 @@
 # The official Next.js plugin handles SSR / route handlers via Netlify Functions.
 
 [build]
-  # Our build script runs `prisma generate` before `next build`.
-  command = "npm run build"
+  # On Netlify the Neon extension injects the DB URL, so we create the schema
+  # (db push) and seed (idempotent) at build time, then build Next.
+  command = "prisma generate && prisma db push --accept-data-loss && prisma db seed && next build"
 
 [build.environment]
   # Prisma needs a fixed binary target on Netlify's build image.

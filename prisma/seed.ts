@@ -119,6 +119,14 @@ const DEMO_USERS = [
 async function main() {
   console.log("Seeding Orient Roam...");
 
+  // Idempotent: skip if the database already has data (so re-deploys don't wipe
+  // user-generated content). Set SEED_FORCE=1 to force a fresh re-seed.
+  const existing = await prisma.user.count().catch(() => 0);
+  if (existing > 0 && process.env.SEED_FORCE !== "1") {
+    console.log(`Already seeded (${existing} users) — skipping.`);
+    return;
+  }
+
   // Clean (order matters for FK constraints).
   await prisma.meetupParticipant.deleteMany();
   await prisma.meetup.deleteMany();
