@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Hero } from "@/components/Hero";
 import { HomeSections } from "@/components/HomeSections";
+import { getUserFavoriteSets } from "@/lib/favorites";
 
 export default async function HomePage() {
   const [cities, topPlaces] = await Promise.all([
@@ -14,6 +15,8 @@ export default async function HomePage() {
       include: { city: true },
     }),
   ]);
+
+  const { saved, wished } = await getUserFavoriteSets(topPlaces.map((p) => p.id));
 
   return (
     <>
@@ -37,6 +40,8 @@ export default async function HomePage() {
           avgRating: p.avgRating,
           reviewCount: p.reviewCount,
           cityName: p.city.nameEn,
+          saved: saved.has(p.id),
+          wished: wished.has(p.id),
         }))}
       />
     </>

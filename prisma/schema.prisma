@@ -99,6 +99,8 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  tags      ReviewTag[]
+
   @@unique([userId, placeId]) // one review per user per place (updatable)
   @@index([placeId])
 }
@@ -108,8 +110,11 @@ model Favorite {
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   placeId String
   place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  // kind: "save" (收藏) | "wish" (想去) — a user can independently mark both.
+  kind    String @default("save")
 
-  @@id([userId, placeId])
+  @@id([userId, placeId, kind])
+  @@index([userId, kind])
 }
 
 // --------------------------- Messaging ---------------------------
@@ -202,4 +207,25 @@ model MeetupParticipant {
   joinedAt DateTime @default(now())
 
   @@id([meetupId, userId])
+}
+
+// ------------------------- Topics / Hashtags ---------------------
+
+// #话题标签 parsed out of review text. `name` is normalized (lowercased, no #).
+model Tag {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  createdAt DateTime    @default(now())
+
+  reviews   ReviewTag[]
+}
+
+model ReviewTag {
+  reviewId String
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  tagId    String
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([reviewId, tagId])
+  @@index([tagId])
 }

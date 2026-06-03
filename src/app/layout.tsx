@@ -5,7 +5,10 @@ import { Providers } from "@/components/Providers";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import { BottomNav } from "@/components/BottomNav";
+import { TopTabs } from "@/components/TopTabs";
+import { QuickNav } from "@/components/QuickNav";
 import { ServiceWorker } from "@/components/ServiceWorker";
+import { THEME_COOKIE, type Theme } from "@/components/ThemeProvider";
 import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
@@ -27,7 +30,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#e11d48",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 };
 
 export default async function RootLayout({
@@ -40,15 +46,23 @@ export default async function RootLayout({
   const initialLocale: Locale = LOCALES.includes(cookieLocale as Locale)
     ? (cookieLocale as Locale)
     : DEFAULT_LOCALE;
+  // Theme is applied here (server-side) so the very first paint matches the
+  // user's saved choice — no light/dark flash on load.
+  const initialTheme: Theme =
+    cookieStore.get(THEME_COOKIE)?.value === "dark" ? "dark" : "light";
 
   return (
-    <html lang={initialLocale} className="h-full antialiased">
+    <html
+      lang={initialLocale}
+      className={`h-full antialiased ${initialTheme === "dark" ? "dark" : ""}`}
+    >
       <body className="min-h-full bg-white text-neutral-900 dark:bg-black dark:text-neutral-100">
-        <Providers initialLocale={initialLocale}>
+        <Providers initialLocale={initialLocale} initialTheme={initialTheme}>
           <div className="mx-auto flex min-h-screen max-w-7xl">
             <Sidebar />
             <div className="flex w-full min-w-0 flex-1 flex-col">
               <Navbar />
+              <TopTabs />
               <main className="flex-1 pb-20 md:pb-8">{children}</main>
               <footer className="border-t border-black/5 py-6 pb-24 text-center text-xs text-neutral-400 md:pb-6 dark:border-white/10">
                 🧭 Orient Roam · A community guide for travelers in China
@@ -56,6 +70,7 @@ export default async function RootLayout({
             </div>
           </div>
           <BottomNav />
+          <QuickNav />
           <ServiceWorker />
         </Providers>
       </body>

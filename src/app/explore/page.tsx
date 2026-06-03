@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ExploreView } from "@/components/ExploreView";
 import { PLACE_CATEGORIES } from "@/lib/validations";
+import { getUserFavoriteSets } from "@/lib/favorites";
 
 export default async function ExplorePage({
   searchParams,
@@ -26,6 +27,8 @@ export default async function ExplorePage({
     }),
   ]);
 
+  const { saved, wished } = await getUserFavoriteSets(places.map((p) => p.id));
+
   const selectedCity = cityId ? cities.find((c) => c.id === cityId) : undefined;
   const center = selectedCity
     ? { lng: selectedCity.lng, lat: selectedCity.lat }
@@ -50,6 +53,8 @@ export default async function ExplorePage({
         avgRating: p.avgRating,
         reviewCount: p.reviewCount,
         cityName: p.city.nameEn,
+        saved: saved.has(p.id),
+        wished: wished.has(p.id),
         lng: p.lng,
         lat: p.lat,
       }))}

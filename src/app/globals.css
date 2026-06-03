@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Drive `dark:` utilities from a `.dark` class on <html> (set server-side from a
+   cookie in layout.tsx, toggled client-side in ThemeProvider) instead of the
+   OS `prefers-color-scheme`. This lets users pick a theme; every existing
+   `dark:` class across the app keeps working unchanged. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,

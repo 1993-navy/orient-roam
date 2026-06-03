@@ -68,6 +68,7 @@ export function ReviewForm({
         placeholder="Share what you loved…"
         className="mt-3 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 dark:border-white/15 dark:bg-neutral-950"
       />
+      <p className="mt-1 text-xs text-neutral-400">{t.hashtagHint}</p>
       {error && <p className="mt-1 text-sm text-rose-600">{error}</p>}
       <button
         type="submit"

@@ -49,6 +49,17 @@ export type UIStrings = {
   typeMessage: string;
   loginToReview: string;
   loginToChat: string;
+  home: string;
+  profile: string;
+  more: string;
+  wantToGo: string;
+  save: string;
+  topic: string;
+  posts: string;
+  backToTop: string;
+  loginToSave: string;
+  noTopicPosts: string;
+  hashtagHint: string;
 };
 
 export const UI: Record<Locale, UIStrings> = {
@@ -80,6 +91,17 @@ export const UI: Record<Locale, UIStrings> = {
     typeMessage: "Type a message…",
     loginToReview: "Sign in to leave a review",
     loginToChat: "Sign in to chat and join meetups",
+    home: "Home",
+    profile: "Profile",
+    more: "More",
+    wantToGo: "Want to go",
+    save: "Save",
+    topic: "Topic",
+    posts: "posts",
+    backToTop: "Back to top",
+    loginToSave: "Sign in to save places",
+    noTopicPosts: "No posts with this topic yet.",
+    hashtagHint: "Tip: add #topics to your review",
   },
   zh: {
     tagline: "安心畅游中国",
@@ -109,6 +131,17 @@ export const UI: Record<Locale, UIStrings> = {
     typeMessage: "输入消息……",
     loginToReview: "登录后即可评价",
     loginToChat: "登录后即可聊天和加入活动",
+    home: "首页",
+    profile: "我的",
+    more: "更多",
+    wantToGo: "想去",
+    save: "收藏",
+    topic: "话题",
+    posts: "条内容",
+    backToTop: "返回顶部",
+    loginToSave: "登录后即可收藏",
+    noTopicPosts: "还没有带这个话题的内容。",
+    hashtagHint: "小贴士：在评价里加 #话题 试试",
   },
 };
 

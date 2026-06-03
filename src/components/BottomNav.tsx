@@ -3,17 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLang } from "@/components/LanguageProvider";
+import { Icon, type IconName } from "@/components/Icon";
 
-// X-style bottom tab bar, mobile only. Four destinations, one of them Chat.
+// X-style bottom tab bar, mobile only. Leads with the three primary
+// destinations (Home / Cities / Community); Explore rounds out the row.
 export function BottomNav() {
   const pathname = usePathname();
-  const { locale, t } = useLang();
+  const { t } = useLang();
 
-  const tabs = [
-    { href: "/", icon: "🧭", label: locale === "zh" ? "首页" : "Home" },
-    { href: "/explore", icon: "🗺️", label: t.explore },
-    { href: "/community", icon: "🤝", label: t.community },
-    { href: "/chat", icon: "💬", label: t.chat },
+  const tabs: { href: string; icon: IconName; label: string }[] = [
+    { href: "/", icon: "home", label: t.home },
+    { href: "/cities", icon: "city", label: t.cities },
+    { href: "/community", icon: "community", label: t.community },
+    { href: "/explore", icon: "explore", label: t.explore },
   ];
 
   function isActive(href: string) {
@@ -34,9 +36,12 @@ export function BottomNav() {
                   active ? "text-rose-600" : "text-neutral-500 dark:text-neutral-400"
                 }`}
               >
-                <span className={`text-xl leading-none ${active ? "scale-110" : ""} transition`}>
-                  {tab.icon}
-                </span>
+                <Icon
+                  name={tab.icon}
+                  className={`h-6 w-6 ${active ? "scale-110" : ""} transition`}
+                  filled={active}
+                  strokeWidth={active ? 2.1 : 1.8}
+                />
                 <span>{tab.label}</span>
               </Link>
             </li>

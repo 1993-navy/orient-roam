@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { CityView } from "@/components/CityView";
+import { getUserFavoriteSets } from "@/lib/favorites";
 
 export default async function CityPage({
   params,
@@ -19,6 +20,8 @@ export default async function CityPage({
   });
 
   if (!city) notFound();
+
+  const { saved, wished } = await getUserFavoriteSets(city.places.map((p) => p.id));
 
   return (
     <CityView
@@ -41,6 +44,8 @@ export default async function CityPage({
         avgRating: p.avgRating,
         reviewCount: p.reviewCount,
         cityName: p.city.nameEn,
+        saved: saved.has(p.id),
+        wished: wished.has(p.id),
         lng: p.lng,
         lat: p.lat,
       }))}

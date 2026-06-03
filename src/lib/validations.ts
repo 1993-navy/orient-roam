@@ -21,6 +21,11 @@ export const reviewSchema = z.object({
   comment: z.string().max(1000).optional().or(z.literal("")),
 });
 
+export const favoriteSchema = z.object({
+  placeId: z.string().min(1),
+  kind: z.enum(["save", "wish"]).default("save"),
+});
+
 export const messageSchema = z.object({
   conversationId: z.string().min(1),
   body: z.string().min(1).max(2000),

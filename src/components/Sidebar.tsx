@@ -4,28 +4,60 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useLang } from "@/components/LanguageProvider";
+import { useTheme } from "@/components/ThemeProvider";
+import { Icon, type IconName } from "@/components/Icon";
 import type { Locale } from "@/lib/i18n";
 
+type NavItem = { href: string; icon: IconName; label: string };
+
 // X-style left navigation rail, shown on desktop (md and up).
+// Three primary destinations (Home / Cities / Community) are emphasized; the
+// rest (Explore / Chat / Profile) sit below a divider as secondary.
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const { locale, setLocale, t } = useLang();
+  const { theme, toggle } = useTheme();
 
-  const items = [
-    { href: "/", icon: "🧭", label: locale === "zh" ? "首页" : "Home" },
-    { href: "/explore", icon: "🗺️", label: t.explore },
-    { href: "/cities", icon: "🏙️", label: t.cities },
-    { href: "/community", icon: "🤝", label: t.community },
-    { href: "/chat", icon: "💬", label: t.chat },
+  const primary: NavItem[] = [
+    { href: "/", icon: "home", label: t.home },
+    { href: "/cities", icon: "city", label: t.cities },
+    { href: "/community", icon: "community", label: t.community },
+  ];
+  const secondary: NavItem[] = [
+    { href: "/explore", icon: "explore", label: t.explore },
+    { href: "/chat", icon: "chat", label: t.chat },
   ];
   if (status === "authenticated" && session?.user) {
-    items.push({ href: `/profile/${session.user.id}`, icon: "👤", label: locale === "zh" ? "我的" : "Profile" });
+    secondary.push({ href: `/profile/${session.user.id}`, icon: "profile", label: t.profile });
   }
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
+  function renderItem(it: NavItem, emphasized: boolean) {
+    const active = isActive(it.href);
+    return (
+      <Link
+        key={it.href}
+        href={it.href}
+        className={`flex items-center gap-4 rounded-full px-3 py-2.5 transition hover:bg-neutral-100 dark:hover:bg-neutral-900 ${
+          active ? "text-rose-600" : ""
+        } ${emphasized ? "text-lg" : "text-base text-neutral-600 dark:text-neutral-300"}`}
+      >
+        <Icon
+          name={it.icon}
+          className={emphasized ? "h-7 w-7" : "h-6 w-6"}
+          filled={active && emphasized}
+          strokeWidth={active ? 2.1 : 1.8}
+        />
+        <span className={`hidden lg:inline ${active ? "font-bold" : emphasized ? "font-medium" : ""}`}>
+          {it.label}
+        </span>
+      </Link>
+    );
   }
 
   return (
@@ -38,21 +70,9 @@ export function Sidebar() {
       </Link>
 
       <nav className="flex flex-col gap-1">
-        {items.map((it) => {
-          const active = isActive(it.href);
-          return (
-            <Link
-              key={it.href}
-              href={it.href}
-              className={`flex items-center gap-4 rounded-full px-3 py-2.5 text-lg transition hover:bg-neutral-100 dark:hover:bg-neutral-900 ${
-                active ? "font-bold" : "font-normal"
-              }`}
-            >
-              <span className={`text-2xl ${active ? "scale-110" : ""}`}>{it.icon}</span>
-              <span className={`hidden lg:inline ${active ? "text-rose-600" : ""}`}>{it.label}</span>
-            </Link>
-          );
-        })}
+        {primary.map((it) => renderItem(it, true))}
+        <div className="my-1 border-t border-black/5 dark:border-white/10" />
+        {secondary.map((it) => renderItem(it, false))}
       </nav>
 
       {status !== "authenticated" && (
@@ -67,11 +87,24 @@ export function Sidebar() {
 
       <div className="mt-auto flex flex-col gap-1">
         <button
+          onClick={toggle}
+          className="flex items-center gap-3 rounded-full px-3 py-2 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-900"
+          title={theme === "dark" ? "Light mode" : "Dark mode"}
+        >
+          <Icon name={theme === "dark" ? "sun" : "moon"} className="h-5 w-5" />
+          <span className="hidden lg:inline">
+            {theme === "dark"
+              ? locale === "zh" ? "浅色" : "Light"
+              : locale === "zh" ? "深色" : "Dark"}
+          </span>
+        </button>
+
+        <button
           onClick={() => setLocale(locale === "en" ? "zh" : ("en" as Locale))}
           className="flex items-center gap-3 rounded-full px-3 py-2 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-900"
           title="Switch language"
         >
-          <span className="text-xl">🌐</span>
+          <Icon name="globe" className="h-5 w-5" />
           <span className="hidden lg:inline">{locale === "en" ? "中文" : "English"}</span>
         </button>
 
@@ -90,10 +123,10 @@ export function Sidebar() {
             </Link>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="hidden text-xs text-neutral-400 hover:text-rose-600 lg:inline"
+              className="hidden text-neutral-400 hover:text-rose-600 lg:inline"
               title={t.signOut}
             >
-              {t.signOut}
+              <Icon name="signout" className="h-5 w-5" />
             </button>
           </div>
         ) : (
@@ -101,7 +134,7 @@ export function Sidebar() {
             href="/auth/signin"
             className="flex items-center gap-3 rounded-full px-3 py-2 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-900"
           >
-            <span className="text-xl">🔑</span>
+            <Icon name="key" className="h-5 w-5" />
             <span className="hidden lg:inline">{t.signIn}</span>
           </Link>
         )}

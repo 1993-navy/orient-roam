@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { RatingStars } from "@/components/RatingStars";
 import { MessageButton } from "@/components/MessageButton";
+import { HashtagText } from "@/lib/hashtags";
 
 export default async function ProfilePage({
   params,
@@ -68,7 +69,10 @@ export default async function ProfilePage({
                   <RatingStars value={r.rating} className="text-sm" />
                 </div>
                 {r.comment && (
-                  <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">{r.comment}</p>
+                  <HashtagText
+                    text={r.comment}
+                    className="mt-1 text-sm text-neutral-600 dark:text-neutral-300"
+                  />
                 )}
               </li>
             ))}

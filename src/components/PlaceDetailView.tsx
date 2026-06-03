@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AmapMap } from "@/components/AmapMap";
 import { RatingStars } from "@/components/RatingStars";
 import { ReviewForm } from "@/components/ReviewForm";
+import { HashtagText } from "@/lib/hashtags";
 import { useLang } from "@/components/LanguageProvider";
 import {
   categoryLabel,
@@ -136,9 +137,10 @@ export function PlaceDetailView({
                 </div>
                 <RatingStars value={r.rating} className="mt-1 text-sm" />
                 {r.comment && (
-                  <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
-                    {r.comment}
-                  </p>
+                  <HashtagText
+                    text={r.comment}
+                    className="mt-1 text-sm text-neutral-600 dark:text-neutral-300"
+                  />
                 )}
               </li>
             ))}
