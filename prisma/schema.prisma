@@ -13,10 +13,9 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // Injected automatically by Netlify's Neon database extension at build &
-  // function runtime. Using the unpooled (direct) URL keeps Prisma simple
-  // (no PgBouncer prepared-statement caveats) — fine for MVP traffic.
-  url      = env("NETLIFY_DATABASE_URL_UNPOOLED")
+  // The build step (scripts/netlify-db-setup.mjs) sets DATABASE_URL from whichever
+  // Netlify DB var is present; at runtime lib/prisma.ts resolves it too.
+  url      = env("DATABASE_URL")
 }
 
 // ----------------------------- Users -----------------------------
