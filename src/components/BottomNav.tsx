@@ -6,7 +6,8 @@ import { useLang } from "@/components/LanguageProvider";
 import { Icon, type IconName } from "@/components/Icon";
 
 // X-style bottom tab bar, mobile only. Leads with the three primary
-// destinations (Home / Cities / Community); Explore rounds out the row.
+// destinations (Home / Cities / Community); Chat rounds out the row.
+// (Explore is reachable via the search icon in the top Navbar.)
 export function BottomNav() {
   const pathname = usePathname();
   const { t } = useLang();
@@ -15,7 +16,7 @@ export function BottomNav() {
     { href: "/", icon: "home", label: t.home },
     { href: "/cities", icon: "city", label: t.cities },
     { href: "/community", icon: "community", label: t.community },
-    { href: "/explore", icon: "explore", label: t.explore },
+    { href: "/chat", icon: "chat", label: t.chat },
   ];
 
   function isActive(href: string) {

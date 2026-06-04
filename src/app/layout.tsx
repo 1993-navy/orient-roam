@@ -5,7 +5,6 @@ import { Providers } from "@/components/Providers";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import { BottomNav } from "@/components/BottomNav";
-import { TopTabs } from "@/components/TopTabs";
 import { QuickNav } from "@/components/QuickNav";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { THEME_COOKIE, type Theme } from "@/components/ThemeProvider";
@@ -62,7 +61,6 @@ export default async function RootLayout({
             <Sidebar />
             <div className="flex w-full min-w-0 flex-1 flex-col">
               <Navbar />
-              <TopTabs />
               <main className="flex-1 pb-20 md:pb-8">{children}</main>
               <footer className="border-t border-black/5 py-6 pb-24 text-center text-xs text-neutral-400 md:pb-6 dark:border-white/10">
                 🧭 Orient Roam · A community guide for travelers in China

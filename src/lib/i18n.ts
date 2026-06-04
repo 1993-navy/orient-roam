@@ -67,6 +67,9 @@ export type UIStrings = {
   endOfList: string;
   noResults: string;
   loadingMore: string;
+  newChat: string;
+  noConversations: string;
+  selectConversation: string;
 };
 
 export const UI: Record<Locale, UIStrings> = {
@@ -116,6 +119,9 @@ export const UI: Record<Locale, UIStrings> = {
     endOfList: "You've reached the end",
     noResults: "No matches — try adjusting your filters.",
     loadingMore: "Loading more…",
+    newChat: "New chat",
+    noConversations: "No conversations yet",
+    selectConversation: "Select a chat to start messaging",
   },
   zh: {
     tagline: "安心畅游中国",
@@ -163,6 +169,9 @@ export const UI: Record<Locale, UIStrings> = {
     endOfList: "已经到底啦",
     noResults: "没有匹配结果——试试调整筛选条件。",
     loadingMore: "加载中……",
+    newChat: "发起聊天",
+    noConversations: "还没有会话",
+    selectConversation: "选择一个会话开始聊天",
   },
 };
 
