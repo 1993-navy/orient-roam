@@ -15,7 +15,9 @@ export default async function ExplorePage({
       ? sp.category
       : undefined;
 
-  const [cities, places] = await Promise.all([
+  // First page only — the client appends more via /api/places as you scroll.
+  const PAGE = 18;
+  const [cities, rows] = await Promise.all([
     prisma.city.findMany({ orderBy: { nameEn: "asc" } }),
     prisma.place.findMany({
       where: {
@@ -24,8 +26,12 @@ export default async function ExplorePage({
       },
       orderBy: [{ weightScore: "desc" }, { reviewCount: "desc" }],
       include: { city: { select: { name: true, nameEn: true } } },
+      take: PAGE + 1,
     }),
   ]);
+
+  const initialHasMore = rows.length > PAGE;
+  const places = initialHasMore ? rows.slice(0, PAGE) : rows;
 
   const { saved, wished } = await getUserFavoriteSets(places.map((p) => p.id));
 
@@ -43,7 +49,8 @@ export default async function ExplorePage({
       currentCategory={category}
       center={center}
       mapZoom={selectedCity ? 11 : 5}
-      places={places.map((p) => ({
+      initialHasMore={initialHasMore}
+      initialPlaces={places.map((p) => ({
         id: p.id,
         name: p.name,
         nameEn: p.nameEn,

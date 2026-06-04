@@ -26,6 +26,7 @@ export function FavoriteButton({
   const router = useRouter();
   const [active, setActive] = useState(initialActive);
   const [pending, setPending] = useState(false);
+  const [bump, setBump] = useState(false); // one-shot icon bounce on activate
 
   const label = kind === "wish" ? t.wantToGo : t.save;
   const activeClasses =
@@ -42,6 +43,7 @@ export function FavoriteButton({
     }
     const next = !active;
     setActive(next); // optimistic
+    if (next) setBump(true); // bounce only when turning on (X heart pop)
     setPending(true);
     try {
       const res = await fetch("/api/favorites", {
@@ -72,12 +74,17 @@ export function FavoriteButton({
           : "text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
       }`}
     >
-      <Icon
-        name={kind === "wish" ? "heart" : "bookmark"}
-        className="h-4 w-4"
-        filled={active}
-        strokeWidth={active ? 2 : 1.8}
-      />
+      <span
+        className={bump ? "inline-flex animate-pop" : "inline-flex"}
+        onAnimationEnd={() => setBump(false)}
+      >
+        <Icon
+          name={kind === "wish" ? "heart" : "bookmark"}
+          className="h-4 w-4"
+          filled={active}
+          strokeWidth={active ? 2 : 1.8}
+        />
+      </span>
       {showLabel && <span>{label}</span>}
     </button>
   );

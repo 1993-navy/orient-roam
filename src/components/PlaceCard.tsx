@@ -29,7 +29,7 @@ export function PlaceCard({ place, rank }: { place: PlaceCardData; rank?: number
   const emoji = CATEGORY_LABELS[place.category]?.emoji ?? "📍";
 
   return (
-    <article className="group relative rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-white/10 dark:bg-neutral-900">
+    <article className="group relative rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99] dark:border-white/10 dark:bg-neutral-900">
       <Link
         href={`/place/${place.id}`}
         aria-label={localizedName(place, locale)}

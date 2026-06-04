@@ -60,6 +60,13 @@ export type UIStrings = {
   loginToSave: string;
   noTopicPosts: string;
   hashtagHint: string;
+  searchPlaces: string;
+  price: string;
+  rating: string;
+  any: string;
+  endOfList: string;
+  noResults: string;
+  loadingMore: string;
 };
 
 export const UI: Record<Locale, UIStrings> = {
@@ -102,6 +109,13 @@ export const UI: Record<Locale, UIStrings> = {
     loginToSave: "Sign in to save places",
     noTopicPosts: "No posts with this topic yet.",
     hashtagHint: "Tip: add #topics to your review",
+    searchPlaces: "Search places, food…",
+    price: "Price",
+    rating: "Rating",
+    any: "Any",
+    endOfList: "You've reached the end",
+    noResults: "No matches — try adjusting your filters.",
+    loadingMore: "Loading more…",
   },
   zh: {
     tagline: "安心畅游中国",
@@ -142,6 +156,13 @@ export const UI: Record<Locale, UIStrings> = {
     loginToSave: "登录后即可收藏",
     noTopicPosts: "还没有带这个话题的内容。",
     hashtagHint: "小贴士：在评价里加 #话题 试试",
+    searchPlaces: "搜索景点、美食……",
+    price: "价格",
+    rating: "评分",
+    any: "不限",
+    endOfList: "已经到底啦",
+    noResults: "没有匹配结果——试试调整筛选条件。",
+    loadingMore: "加载中……",
   },
 };
 
