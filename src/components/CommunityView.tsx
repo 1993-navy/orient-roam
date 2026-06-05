@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { useLang } from "@/components/LanguageProvider";
 import { MEETUP_TYPE_LABELS } from "@/lib/i18n";
 import { CommunityFeed } from "@/components/CommunityFeed";
+import { MessageButton } from "@/components/MessageButton";
 import type { PostCardData } from "@/components/PostCard";
 
 type Meetup = {
   id: string;
+  hostId: string;
   type: string;
   title: string;
   description: string | null;
@@ -32,6 +34,7 @@ type Community = {
 
 export function CommunityView({
   isAuthed,
+  meId,
   cities,
   communities,
   meetups,
@@ -39,6 +42,7 @@ export function CommunityView({
   initialHasMore,
 }: {
   isAuthed: boolean;
+  meId: string | null;
   cities: { id: string; nameEn: string }[];
   communities: Community[];
   meetups: Meetup[];
@@ -125,13 +129,21 @@ export function CommunityView({
                       </span>
                     </div>
                     {isAuthed && (
-                      <button
-                        disabled={m.joined || full || busy === `join-${m.id}`}
-                        onClick={() => post("/api/meetups/join", { meetupId: m.id }, `join-${m.id}`)}
-                        className="mt-2 rounded-full bg-rose-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:bg-neutral-300 dark:disabled:bg-neutral-700"
-                      >
-                        {m.joined ? "✓ Joined" : full ? "Full" : t.join}
-                      </button>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <button
+                          disabled={m.joined || full || busy === `join-${m.id}`}
+                          onClick={() => post("/api/meetups/join", { meetupId: m.id }, `join-${m.id}`)}
+                          className="rounded-full bg-rose-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:bg-neutral-300 dark:disabled:bg-neutral-700"
+                        >
+                          {m.joined ? "✓ Joined" : full ? "Full" : t.join}
+                        </button>
+                        {m.hostId !== meId && (
+                          <MessageButton
+                            targetUserId={m.hostId}
+                            className="rounded-full border border-rose-200 px-4 py-1.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-60 dark:border-rose-900 dark:hover:bg-rose-950/40"
+                          />
+                        )}
+                      </div>
                     )}
                   </li>
                 );

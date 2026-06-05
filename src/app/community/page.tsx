@@ -46,6 +46,7 @@ export default async function CommunityPage() {
   return (
     <CommunityView
       isAuthed={Boolean(userId)}
+      meId={userId}
       cities={cities}
       initialHasMore={initialHasMore}
       initialPosts={feedPage.map((p) => ({
@@ -68,6 +69,7 @@ export default async function CommunityPage() {
       }))}
       meetups={meetups.map((m) => ({
         id: m.id,
+        hostId: m.hostId,
         type: m.type,
         title: m.title,
         description: m.description,

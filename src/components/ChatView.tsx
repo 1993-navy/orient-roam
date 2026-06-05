@@ -34,14 +34,20 @@ export function ChatView({
   me,
   conversations,
   otherUsers,
+  initialConversationId = null,
 }: {
   me: string;
   conversations: Convo[];
   otherUsers: { id: string; name: string }[];
+  initialConversationId?: string | null;
 }) {
   const { t } = useLang();
   const router = useRouter();
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(
+    initialConversationId && conversations.some((c) => c.id === initialConversationId)
+      ? initialConversationId
+      : null,
+  );
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);

@@ -3,7 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ChatView } from "@/components/ChatView";
 
-export default async function ChatPage() {
+export default async function ChatPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ c?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) {
     return (
@@ -46,5 +50,13 @@ export default async function ChatPage() {
     })
     .sort((a, b) => (b.lastAt ?? "").localeCompare(a.lastAt ?? ""));
 
-  return <ChatView me={me} conversations={convos} otherUsers={otherUsers} />;
+  const sp = await searchParams;
+  return (
+    <ChatView
+      me={me}
+      conversations={convos}
+      otherUsers={otherUsers}
+      initialConversationId={sp.c ?? null}
+    />
+  );
 }
