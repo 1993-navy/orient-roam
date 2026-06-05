@@ -128,6 +128,9 @@ async function main() {
   }
 
   // Clean (order matters for FK constraints).
+  await prisma.postLike.deleteMany();
+  await prisma.postTag.deleteMany();
+  await prisma.post.deleteMany();
   await prisma.meetupParticipant.deleteMany();
   await prisma.meetup.deleteMany();
   await prisma.communityMember.deleteMany();
@@ -247,6 +250,49 @@ async function main() {
     },
   });
   console.log(`  1 community (${community.name}) + 1 meetup`);
+
+  // A few demo feed posts so the community信息流 isn't empty. The #hashtags in
+  // each body match the tag names so the /topic pages resolve.
+  const demoPosts: { authorId: string; body: string; cityId?: string; tags: string[] }[] = [
+    {
+      authorId: users[0].id,
+      body: "Climbed the Great Wall at sunrise — unreal views and almost no crowds. Go early! #beijing #greatwall",
+      cityId: beijing?.id,
+      tags: ["beijing", "greatwall"],
+    },
+    {
+      authorId: users[1].id,
+      body: "Best Peking duck I found was a tiny spot near Houhai, not the touristy chains. #beijing #foodie",
+      cityId: beijing?.id,
+      tags: ["beijing", "foodie"],
+    },
+    {
+      authorId: users[2].id,
+      body: "想找搭子周末逛胡同 + 喝豆汁儿,有同好吗? #北京 #citywalk",
+      cityId: beijing?.id,
+      tags: ["北京", "citywalk"],
+    },
+    {
+      authorId: users[0].id,
+      body: "Pro tip: grab a transit card on day one — saves so much hassle on the subway. #traveltips",
+      tags: ["traveltips"],
+    },
+  ];
+  for (const dp of demoPosts) {
+    await prisma.post.create({
+      data: {
+        authorId: dp.authorId,
+        body: dp.body,
+        cityId: dp.cityId ?? null,
+        tags: {
+          create: dp.tags.map((name) => ({
+            tag: { connectOrCreate: { where: { name }, create: { name } } },
+          })),
+        },
+      },
+    });
+  }
+  console.log(`  ${demoPosts.length} demo posts`);
 
   console.log("Done.");
 }

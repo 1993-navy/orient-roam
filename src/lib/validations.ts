@@ -40,6 +40,11 @@ export const meetupSchema = z.object({
   maxPeople: z.coerce.number().int().min(2).max(50).default(4),
 });
 
+export const postSchema = z.object({
+  body: z.string().trim().min(1, "Write something").max(500),
+  cityId: z.string().optional().or(z.literal("")),
+});
+
 export const PLACE_CATEGORIES = [
   "FOOD",
   "ATTRACTION",

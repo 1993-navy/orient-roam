@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type ApiPage<T> = { places?: T[]; items?: T[]; hasMore?: boolean };
+type ApiPage<T> = { places?: T[]; posts?: T[]; items?: T[]; hasMore?: boolean };
 
 /**
  * Generic offset-paginated infinite list.
@@ -39,7 +39,7 @@ export function useInfiniteList<T>({
   );
 
   const parse = (d: ApiPage<T>): { rows: T[]; more: boolean } => ({
-    rows: d.places ?? d.items ?? [],
+    rows: d.places ?? d.posts ?? d.items ?? [],
     more: Boolean(d.hasMore),
   });
 

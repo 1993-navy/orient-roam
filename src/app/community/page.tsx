@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { CommunityView } from "@/components/CommunityView";
+import { getUserPostLikes } from "@/lib/posts";
+
+const FEED_PAGE = 15;
 
 export default async function CommunityPage() {
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
-  const [communities, meetups, cities] = await Promise.all([
+  const [communities, meetups, cities, postRows] = await Promise.all([
     prisma.community.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -26,12 +29,35 @@ export default async function CommunityPage() {
       },
     }),
     prisma.city.findMany({ orderBy: { nameEn: "asc" }, select: { id: true, nameEn: true } }),
+    prisma.post.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        author: { select: { id: true, name: true } },
+        city: { select: { nameEn: true } },
+      },
+      take: FEED_PAGE + 1,
+    }),
   ]);
+
+  const initialHasMore = postRows.length > FEED_PAGE;
+  const feedPage = initialHasMore ? postRows.slice(0, FEED_PAGE) : postRows;
+  const likedSet = await getUserPostLikes(feedPage.map((p) => p.id));
 
   return (
     <CommunityView
       isAuthed={Boolean(userId)}
       cities={cities}
+      initialHasMore={initialHasMore}
+      initialPosts={feedPage.map((p) => ({
+        id: p.id,
+        body: p.body,
+        createdAt: p.createdAt.toISOString(),
+        authorId: p.author.id,
+        authorName: p.author.name,
+        cityName: p.city?.nameEn ?? null,
+        likeCount: p.likeCount,
+        liked: likedSet.has(p.id),
+      }))}
       communities={communities.map((c) => ({
         id: c.id,
         name: c.name,

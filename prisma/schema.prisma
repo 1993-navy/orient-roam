@@ -39,6 +39,8 @@ model User {
   communityMembers   CommunityMember[]
   hostedMeetups      Meetup[]             @relation("MeetupHost")
   meetupParticipants MeetupParticipant[]
+  posts              Post[]               @relation("UserPosts")
+  postLikes          PostLike[]
 }
 
 // ----------------------------- Places ----------------------------
@@ -56,6 +58,7 @@ model City {
   places      Place[]
   communities Community[]
   meetups     Meetup[]
+  posts       Post[]
 }
 
 model Place {
@@ -218,6 +221,7 @@ model Tag {
   createdAt DateTime    @default(now())
 
   reviews   ReviewTag[]
+  posts     PostTag[]
 }
 
 model ReviewTag {
@@ -227,5 +231,47 @@ model ReviewTag {
   tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([reviewId, tagId])
+  @@index([tagId])
+}
+
+// ----------------------- Community feed (信息流) -----------------------
+
+// A free-form community post (X-style). Text + optional city; #hashtags are
+// parsed from `body` into PostTag (reusing the Tag table shared with reviews).
+model Post {
+  id        String     @id @default(cuid())
+  authorId  String
+  author    User       @relation("UserPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  cityId    String?
+  city      City?      @relation(fields: [cityId], references: [id])
+  likeCount Int        @default(0) // cached; recomputed on each like toggle
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  likes PostLike[]
+  tags  PostTag[]
+
+  @@index([createdAt])
+  @@index([cityId, createdAt])
+}
+
+model PostLike {
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId])
+}
+
+model PostTag {
+  postId String
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tagId  String
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
   @@index([tagId])
 }

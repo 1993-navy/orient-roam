@@ -1,0 +1,57 @@
+"use client";
+
+import Link from "next/link";
+import { HashtagText } from "@/lib/hashtags";
+import { LikeButton } from "@/components/LikeButton";
+
+export type PostCardData = {
+  id: string;
+  body: string;
+  createdAt: string;
+  authorId: string;
+  authorName: string;
+  cityName: string | null;
+  likeCount: number;
+  liked: boolean;
+};
+
+function initial(name: string) {
+  return (name || "?").charAt(0).toUpperCase();
+}
+
+export function PostCard({ post }: { post: PostCardData }) {
+  return (
+    <article className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg dark:border-white/10 dark:bg-neutral-900">
+      <div className="flex items-center gap-2">
+        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-gradient-to-br from-rose-200 to-orange-200 text-sm font-bold text-neutral-700 dark:from-neutral-700 dark:to-neutral-800 dark:text-neutral-200">
+          {initial(post.authorName)}
+        </span>
+        <div className="min-w-0">
+          <Link
+            href={`/profile/${post.authorId}`}
+            className="font-semibold hover:text-rose-600"
+          >
+            {post.authorName}
+          </Link>
+          <div className="flex items-center gap-1 text-xs text-neutral-400">
+            <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+            {post.cityName && <span>· {post.cityName}</span>}
+          </div>
+        </div>
+      </div>
+
+      <HashtagText
+        text={post.body}
+        className="mt-2 whitespace-pre-wrap text-sm text-neutral-700 dark:text-neutral-200"
+      />
+
+      <div className="mt-2">
+        <LikeButton
+          postId={post.id}
+          initialLiked={post.liked}
+          initialCount={post.likeCount}
+        />
+      </div>
+    </article>
+  );
+}

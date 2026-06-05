@@ -70,6 +70,11 @@ export type UIStrings = {
   newChat: string;
   noConversations: string;
   selectConversation: string;
+  feed: string;
+  shareUpdate: string;
+  postPlaceholder: string;
+  postEmpty: string;
+  anyCity: string;
 };
 
 export const UI: Record<Locale, UIStrings> = {
@@ -122,6 +127,11 @@ export const UI: Record<Locale, UIStrings> = {
     newChat: "New chat",
     noConversations: "No conversations yet",
     selectConversation: "Select a chat to start messaging",
+    feed: "Feed",
+    shareUpdate: "Post",
+    postPlaceholder: "Share a travel find… add #topics",
+    postEmpty: "No posts yet — be the first!",
+    anyCity: "Any city",
   },
   zh: {
     tagline: "安心畅游中国",
@@ -172,6 +182,11 @@ export const UI: Record<Locale, UIStrings> = {
     newChat: "发起聊天",
     noConversations: "还没有会话",
     selectConversation: "选择一个会话开始聊天",
+    feed: "动态",
+    shareUpdate: "发布",
+    postPlaceholder: "分享你的旅行发现……可加 #话题",
+    postEmpty: "还没有动态,来发第一条吧!",
+    anyCity: "不限城市",
   },
 };
 
