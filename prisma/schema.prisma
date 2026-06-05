@@ -41,6 +41,7 @@ model User {
   meetupParticipants MeetupParticipant[]
   posts              Post[]               @relation("UserPosts")
   postLikes          PostLike[]
+  trips              Trip[]               @relation("UserTrips")
 }
 
 // ----------------------------- Places ----------------------------
@@ -59,6 +60,7 @@ model City {
   communities Community[]
   meetups     Meetup[]
   posts       Post[]
+  trips       Trip[]
 }
 
 model Place {
@@ -86,6 +88,7 @@ model Place {
   reviews   Review[]
   favorites Favorite[]
   meetups   Meetup[]
+  tripStops TripStop[]
 
   @@index([cityId, category])
   @@index([weightScore])
@@ -274,4 +277,35 @@ model PostTag {
 
   @@id([postId, tagId])
   @@index([tagId])
+}
+
+// --------------------------- Trips / 行程 ------------------------
+
+// A user's multi-day itinerary. Stops are places grouped by day number.
+model Trip {
+  id        String     @id @default(cuid())
+  ownerId   String
+  owner     User       @relation("UserTrips", fields: [ownerId], references: [id], onDelete: Cascade)
+  title     String
+  cityId    String?
+  city      City?      @relation(fields: [cityId], references: [id])
+  createdAt DateTime   @default(now())
+
+  stops TripStop[]
+
+  @@index([ownerId, createdAt])
+}
+
+model TripStop {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  placeId   String
+  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  day       Int      @default(1) // 1-based day number within the trip
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@unique([tripId, placeId]) // a place appears at most once per trip
+  @@index([tripId, day])
 }

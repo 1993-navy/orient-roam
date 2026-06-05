@@ -41,6 +41,17 @@ export const meetupSchema = z.object({
   maxPeople: z.coerce.number().int().min(2).max(50).default(4),
 });
 
+export const tripSchema = z.object({
+  title: z.string().trim().min(1, "Name your trip").max(100),
+  cityId: z.string().optional().or(z.literal("")),
+});
+
+export const tripStopSchema = z.object({
+  tripId: z.string().min(1),
+  placeId: z.string().min(1),
+  day: z.coerce.number().int().min(1).max(30).default(1),
+});
+
 export const postSchema = z.object({
   body: z.string().trim().min(1, "Write something").max(500),
   cityId: z.string().optional().or(z.literal("")),

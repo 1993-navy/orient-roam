@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AmapMap } from "@/components/AmapMap";
 import { RatingStars } from "@/components/RatingStars";
 import { ReviewForm } from "@/components/ReviewForm";
+import { AddToTripButton } from "@/components/AddToTripButton";
 import { HashtagText } from "@/lib/hashtags";
 import { useLang } from "@/components/LanguageProvider";
 import {
@@ -83,6 +84,10 @@ export function PlaceDetailView({
             </Link>
           </div>
         </div>
+      </div>
+
+      <div className="mt-3">
+        <AddToTripButton placeId={place.id} />
       </div>
 
       {place.description && (

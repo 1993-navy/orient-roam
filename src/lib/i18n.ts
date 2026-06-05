@@ -79,6 +79,13 @@ export type UIStrings = {
   leave: string;
   hosting: string;
   when: string;
+  trips: string;
+  newTrip: string;
+  tripTitle: string;
+  addToTrip: string;
+  remove: string;
+  noTrips: string;
+  createTrip: string;
 };
 
 export const UI: Record<Locale, UIStrings> = {
@@ -140,6 +147,13 @@ export const UI: Record<Locale, UIStrings> = {
     leave: "Leave",
     hosting: "You're hosting",
     when: "When",
+    trips: "Trips",
+    newTrip: "New trip",
+    tripTitle: "Trip name",
+    addToTrip: "Add to trip",
+    remove: "Remove",
+    noTrips: "No trips yet — create one!",
+    createTrip: "Create",
   },
   zh: {
     tagline: "安心畅游中国",
@@ -199,6 +213,13 @@ export const UI: Record<Locale, UIStrings> = {
     leave: "退出",
     hosting: "你是主办人",
     when: "时间",
+    trips: "行程",
+    newTrip: "新建行程",
+    tripTitle: "行程名称",
+    addToTrip: "加入行程",
+    remove: "移除",
+    noTrips: "还没有行程,新建一个吧!",
+    createTrip: "创建",
   },
 };
 

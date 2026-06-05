@@ -32,6 +32,14 @@ export function Navbar() {
           >
             <Icon name="search" className="h-5 w-5" />
           </Link>
+          <Link
+            href="/trips"
+            className="rounded-full p-2 text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            title={t.trips}
+            aria-label={t.trips}
+          >
+            <Icon name="route" className="h-5 w-5" />
+          </Link>
           <button
             onClick={toggle}
             className="rounded-full p-2 text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"

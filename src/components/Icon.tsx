@@ -20,7 +20,8 @@ export type IconName =
   | "key"
   | "plus"
   | "back"
-  | "hash";
+  | "hash"
+  | "route";
 
 // 24x24 viewBox, 1.8 stroke, round caps/joins — a calm, X-like line style.
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -83,6 +84,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
   plus: <path d="M12 5v14M5 12h14" />,
   back: <path d="M15 5l-7 7 7 7" />,
   hash: <path d="M9 3 7 21M17 3l-2 18M4 8.5h16M3.5 15.5h16" />,
+  route: (
+    <>
+      <circle cx="6" cy="19" r="2" />
+      <circle cx="18" cy="5" r="2" />
+      <path d="M8 19h6a3 3 0 0 0 3-3V9" />
+    </>
+  ),
 };
 
 export function Icon({

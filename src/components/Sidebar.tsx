@@ -27,6 +27,7 @@ export function Sidebar() {
   ];
   const secondary: NavItem[] = [
     { href: "/explore", icon: "explore", label: t.explore },
+    { href: "/trips", icon: "route", label: t.trips },
     { href: "/chat", icon: "chat", label: t.chat },
   ];
   if (status === "authenticated" && session?.user) {
