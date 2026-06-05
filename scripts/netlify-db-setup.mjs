@@ -20,7 +20,14 @@ const run = (cmd) => execSync(cmd, { stdio: "inherit", env });
 console.log("netlify-db-setup: applying schema (prisma db push)...");
 run("prisma db push --accept-data-loss --skip-generate");
 
-console.log("netlify-db-setup: seeding (idempotent)...");
-run("prisma db seed");
+// Seeding WIPES all rows and reloads demo data, so it must NOT run on every
+// deploy — that would destroy real user data. It only runs when RUN_SEED=1 is
+// set as a Netlify env var. Use it for a one-off seed, then remove the var.
+if (process.env.RUN_SEED === "1") {
+  console.log("netlify-db-setup: RUN_SEED=1 → seeding (wipes + reloads demo data)...");
+  run("prisma db seed");
+} else {
+  console.log("netlify-db-setup: skipping seed (set RUN_SEED=1 to seed once).");
+}
 
 console.log("netlify-db-setup: done.");
