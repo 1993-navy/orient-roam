@@ -75,6 +75,10 @@ export type UIStrings = {
   postPlaceholder: string;
   postEmpty: string;
   anyCity: string;
+  participants: string;
+  leave: string;
+  hosting: string;
+  when: string;
 };
 
 export const UI: Record<Locale, UIStrings> = {
@@ -132,6 +136,10 @@ export const UI: Record<Locale, UIStrings> = {
     postPlaceholder: "Share a travel find… add #topics",
     postEmpty: "No posts yet — be the first!",
     anyCity: "Any city",
+    participants: "Participants",
+    leave: "Leave",
+    hosting: "You're hosting",
+    when: "When",
   },
   zh: {
     tagline: "安心畅游中国",
@@ -187,6 +195,10 @@ export const UI: Record<Locale, UIStrings> = {
     postPlaceholder: "分享你的旅行发现……可加 #话题",
     postEmpty: "还没有动态,来发第一条吧!",
     anyCity: "不限城市",
+    participants: "参与者",
+    leave: "退出",
+    hosting: "你是主办人",
+    when: "时间",
   },
 };
 

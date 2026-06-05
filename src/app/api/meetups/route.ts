@@ -17,7 +17,8 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  const { type, title, description, cityId, placeId, maxPeople } = parsed.data;
+  const { type, title, description, cityId, placeId, startTime, maxPeople } =
+    parsed.data;
 
   const meetup = await prisma.meetup.create({
     data: {
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
       description: description || null,
       cityId: cityId || null,
       placeId: placeId || null,
+      startTime: startTime ? new Date(startTime) : null,
       maxPeople,
       hostId: session.user.id,
       participants: { create: [{ userId: session.user.id }] },

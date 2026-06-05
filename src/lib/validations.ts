@@ -37,6 +37,7 @@ export const meetupSchema = z.object({
   description: z.string().max(1000).optional().or(z.literal("")),
   cityId: z.string().optional().or(z.literal("")),
   placeId: z.string().optional().or(z.literal("")),
+  startTime: z.string().optional().or(z.literal("")),
   maxPeople: z.coerce.number().int().min(2).max(50).default(4),
 });
 

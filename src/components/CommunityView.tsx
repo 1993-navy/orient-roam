@@ -14,6 +14,7 @@ type Meetup = {
   hostId: string;
   type: string;
   title: string;
+  startTime: string | null;
   description: string | null;
   cityName: string | null;
   placeName: string | null;
@@ -116,7 +117,17 @@ export function CommunityView({
                       </span>
                       {m.cityName && <span className="text-neutral-400">· {m.cityName}</span>}
                     </div>
-                    <h3 className="mt-1 font-semibold">{m.title}</h3>
+                    <Link
+                      href={`/meetup/${m.id}`}
+                      className="mt-1 block font-semibold hover:text-rose-600"
+                    >
+                      {m.title}
+                    </Link>
+                    {m.startTime && (
+                      <p className="text-xs text-neutral-400">
+                        🕒 {new Date(m.startTime).toLocaleString()}
+                      </p>
+                    )}
                     {m.description && (
                       <p className="text-sm text-neutral-500">{m.description}</p>
                     )}
@@ -204,6 +215,7 @@ function CreateMeetupForm({
   const [type, setType] = useState("MEAL");
   const [title, setTitle] = useState("");
   const [cityId, setCityId] = useState("");
+  const [startTime, setStartTime] = useState("");
   const [maxPeople, setMaxPeople] = useState(4);
 
   return (
@@ -211,8 +223,9 @@ function CreateMeetupForm({
       onSubmit={(e) => {
         e.preventDefault();
         if (!title.trim()) return;
-        onCreate({ type, title, cityId, maxPeople });
+        onCreate({ type, title, cityId, startTime, maxPeople });
         setTitle("");
+        setStartTime("");
       }}
       className="mt-3 card p-4"
     >
@@ -257,6 +270,12 @@ function CreateMeetupForm({
           className="w-20 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-neutral-950"
         />
       </div>
+      <input
+        type="datetime-local"
+        value={startTime}
+        onChange={(e) => setStartTime(e.target.value)}
+        className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-neutral-950"
+      />
       <button
         disabled={busy}
         className="mt-2 rounded-full bg-rose-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"

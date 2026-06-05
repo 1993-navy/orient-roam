@@ -24,8 +24,10 @@ export default async function CommunityPage() {
         city: { select: { nameEn: true } },
         place: { select: { nameEn: true } },
         host: { select: { name: true } },
-        _count: { select: { participants: true } },
-        participants: userId ? { where: { userId }, select: { userId: true } } : false,
+        _count: { select: { participants: { where: { status: "joined" } } } },
+        participants: userId
+          ? { where: { userId, status: "joined" }, select: { userId: true } }
+          : false,
       },
     }),
     prisma.city.findMany({ orderBy: { nameEn: "asc" }, select: { id: true, nameEn: true } }),
@@ -72,6 +74,7 @@ export default async function CommunityPage() {
         hostId: m.hostId,
         type: m.type,
         title: m.title,
+        startTime: m.startTime?.toISOString() ?? null,
         description: m.description,
         cityName: m.city?.nameEn ?? null,
         placeName: m.place?.nameEn ?? null,
