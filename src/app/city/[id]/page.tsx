@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { CityView } from "@/components/CityView";
 import { getUserFavoriteSets } from "@/lib/favorites";
+import { toPlaceCardData } from "@/lib/places";
 
 export default async function CityPage({
   params,
@@ -41,21 +42,7 @@ export default async function CityPage({
         lat: city.lat,
       }}
       initialHasMore={initialHasMore}
-      initialPlaces={placeRows.map((p) => ({
-        id: p.id,
-        name: p.name,
-        nameEn: p.nameEn,
-        category: p.category,
-        description: p.description,
-        priceLevel: p.priceLevel,
-        avgRating: p.avgRating,
-        reviewCount: p.reviewCount,
-        cityName: p.city.nameEn,
-        saved: saved.has(p.id),
-        wished: wished.has(p.id),
-        lng: p.lng,
-        lat: p.lat,
-      }))}
+      initialPlaces={placeRows.map((p) => toPlaceCardData(p, { saved, wished }))}
     />
   );
 }

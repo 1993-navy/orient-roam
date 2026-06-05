@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/components/LanguageProvider";
 import { Icon } from "@/components/Icon";
+import { Avatar } from "@/components/Avatar";
 
 type Convo = {
   id: string;
@@ -20,25 +21,10 @@ type Msg = {
   createdAt: string;
 };
 
-function initial(name: string) {
-  return (name || "?").charAt(0).toUpperCase();
-}
-
 function fmtTime(iso: string | null) {
   if (!iso) return "";
   const d = new Date(iso);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
-// WeChat-style rounded-square avatar with the contact's initial.
-function Avatar({ name, className = "h-10 w-10" }: { name: string; className?: string }) {
-  return (
-    <span
-      className={`flex flex-none items-center justify-center rounded-lg bg-gradient-to-br from-rose-200 to-orange-200 text-sm font-bold text-neutral-700 dark:from-neutral-700 dark:to-neutral-800 dark:text-neutral-200 ${className}`}
-    >
-      {initial(name)}
-    </span>
-  );
 }
 
 // WeChat-style messenger: a conversation list and a thread. On mobile only one
@@ -148,7 +134,7 @@ export function ChatView({
                       : "hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
                   }`}
                 >
-                  <Avatar name={c.title} />
+                  <Avatar name={c.title} className="h-10 w-10 text-sm" square />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="truncate font-medium">{c.title}</span>
@@ -196,7 +182,7 @@ export function ChatView({
                       key={m.id}
                       className={`flex items-end gap-2 ${mine ? "flex-row-reverse" : "flex-row"}`}
                     >
-                      <Avatar name={m.senderName} className="h-8 w-8" />
+                      <Avatar name={m.senderName} className="h-8 w-8 text-sm" square />
                       <div className="flex max-w-[72%] flex-col gap-0.5">
                         {!mine && (
                           <span className="px-1 text-[11px] text-neutral-400">

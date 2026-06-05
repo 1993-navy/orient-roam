@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useLang } from "@/components/LanguageProvider";
 import { useTheme } from "@/components/ThemeProvider";
 import { Icon, type IconName } from "@/components/Icon";
+import { Avatar } from "@/components/Avatar";
 import type { Locale } from "@/lib/i18n";
 
 type NavItem = { href: string; icon: IconName; label: string };
@@ -114,9 +115,7 @@ export function Sidebar() {
               href={`/profile/${session.user.id}`}
               className="flex min-w-0 flex-1 items-center gap-2"
             >
-              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gradient-to-br from-rose-100 to-orange-100 font-bold dark:from-neutral-800 dark:to-neutral-800">
-                {(session.user.name ?? "?").charAt(0).toUpperCase()}
-              </span>
+              <Avatar name={session.user.name ?? "?"} className="h-9 w-9 text-sm" />
               <span className="hidden min-w-0 truncate text-sm font-medium lg:inline">
                 {session.user.name}
               </span>

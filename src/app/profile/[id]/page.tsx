@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { RatingStars } from "@/components/RatingStars";
 import { MessageButton } from "@/components/MessageButton";
 import { HashtagText } from "@/lib/hashtags";
+import { Avatar } from "@/components/Avatar";
 
 export default async function ProfilePage({
   params,
@@ -32,9 +33,7 @@ export default async function ProfilePage({
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="flex items-center gap-4">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-rose-100 to-orange-100 text-3xl dark:from-neutral-800 dark:to-neutral-800">
-          {user.name.charAt(0).toUpperCase()}
-        </div>
+        <Avatar name={user.name} className="h-20 w-20 text-3xl" />
         <div className="flex-1">
           <h1 className="text-2xl font-bold">{user.name}</h1>
           <p className="text-sm text-neutral-500">

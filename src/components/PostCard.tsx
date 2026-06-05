@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { HashtagText } from "@/lib/hashtags";
 import { LikeButton } from "@/components/LikeButton";
+import { Avatar } from "@/components/Avatar";
 
 export type PostCardData = {
   id: string;
@@ -15,17 +16,11 @@ export type PostCardData = {
   liked: boolean;
 };
 
-function initial(name: string) {
-  return (name || "?").charAt(0).toUpperCase();
-}
-
 export function PostCard({ post }: { post: PostCardData }) {
   return (
-    <article className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg dark:border-white/10 dark:bg-neutral-900">
+    <article className="card p-4 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg">
       <div className="flex items-center gap-2">
-        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-gradient-to-br from-rose-200 to-orange-200 text-sm font-bold text-neutral-700 dark:from-neutral-700 dark:to-neutral-800 dark:text-neutral-200">
-          {initial(post.authorName)}
-        </span>
+        <Avatar name={post.authorName} className="h-9 w-9 text-sm" square />
         <div className="min-w-0">
           <Link
             href={`/profile/${post.authorId}`}

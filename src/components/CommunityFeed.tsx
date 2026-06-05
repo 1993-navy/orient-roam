@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PostCard, type PostCardData } from "@/components/PostCard";
 import { PostComposer } from "@/components/PostComposer";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
+import { FeedFooter } from "@/components/FeedFooter";
 import { useLang } from "@/components/LanguageProvider";
 
 // The community信息流: composer (when signed in) + an infinite-scroll feed.
@@ -49,9 +50,12 @@ export function CommunityFeed({
         posts.map((p) => <PostCard key={p.id} post={p} />)
       )}
 
-      <div ref={sentinelRef} className="py-4 text-center text-sm text-neutral-400">
-        {loading ? t.loadingMore : !hasMore && posts.length > 0 ? t.endOfList : ""}
-      </div>
+      <FeedFooter
+        sentinelRef={sentinelRef}
+        loading={loading}
+        hasMore={hasMore}
+        count={posts.length}
+      />
     </section>
   );
 }

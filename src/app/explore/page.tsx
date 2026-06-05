@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ExploreView } from "@/components/ExploreView";
 import { PLACE_CATEGORIES } from "@/lib/validations";
 import { getUserFavoriteSets } from "@/lib/favorites";
+import { toPlaceCardData } from "@/lib/places";
 
 export default async function ExplorePage({
   searchParams,
@@ -50,21 +51,7 @@ export default async function ExplorePage({
       center={center}
       mapZoom={selectedCity ? 11 : 5}
       initialHasMore={initialHasMore}
-      initialPlaces={places.map((p) => ({
-        id: p.id,
-        name: p.name,
-        nameEn: p.nameEn,
-        category: p.category,
-        description: p.description,
-        priceLevel: p.priceLevel,
-        avgRating: p.avgRating,
-        reviewCount: p.reviewCount,
-        cityName: p.city.nameEn,
-        saved: saved.has(p.id),
-        wished: wished.has(p.id),
-        lng: p.lng,
-        lat: p.lat,
-      }))}
+      initialPlaces={places.map((p) => toPlaceCardData(p, { saved, wished }))}
     />
   );
 }

@@ -5,6 +5,7 @@ import { AmapMap } from "@/components/AmapMap";
 import { PlaceCard, type PlaceCardData } from "@/components/PlaceCard";
 import { useLang } from "@/components/LanguageProvider";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
+import { FeedFooter } from "@/components/FeedFooter";
 import { categoryLabel, localizedName, CATEGORY_LABELS } from "@/lib/i18n";
 import { PLACE_CATEGORIES } from "@/lib/validations";
 
@@ -75,13 +76,12 @@ export function CityView({
             <PlaceCard key={p.id} place={p} rank={i + 1} />
           ))}
         </div>
-        <div ref={sentinelRef} className="py-4 text-center text-sm text-neutral-400">
-          {loading
-            ? t.loadingMore
-            : !hasMore && items.length > 0
-              ? t.endOfList
-              : ""}
-        </div>
+        <FeedFooter
+          sentinelRef={sentinelRef}
+          loading={loading}
+          hasMore={hasMore}
+          count={items.length}
+        />
       </section>
     </div>
   );

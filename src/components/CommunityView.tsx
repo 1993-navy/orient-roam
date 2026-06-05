@@ -104,7 +104,7 @@ export function CommunityView({
                 return (
                   <li
                     key={m.id}
-                    className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-neutral-900"
+                    className="card p-4"
                   >
                     <div className="flex items-center gap-2 text-xs font-semibold text-rose-600">
                       <span>
@@ -146,7 +146,7 @@ export function CommunityView({
               {communities.map((c) => (
                 <li
                   key={c.id}
-                  className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-neutral-900"
+                  className="card p-4"
                 >
                   <div className="flex items-baseline justify-between">
                     <h3 className="font-semibold">{c.name}</h3>
@@ -202,7 +202,7 @@ function CreateMeetupForm({
         onCreate({ type, title, cityId, maxPeople });
         setTitle("");
       }}
-      className="mt-3 rounded-2xl border border-black/5 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-neutral-900"
+      className="mt-3 card p-4"
     >
       <h3 className="text-sm font-semibold">{t.startMeetup}</h3>
       <div className="mt-2 flex flex-wrap gap-2">

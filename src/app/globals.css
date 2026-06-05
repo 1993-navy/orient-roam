@@ -45,3 +45,13 @@ body {
     animation: none;
   }
 }
+
+/* Shared card shell (rounded surface + hairline border + soft shadow). Callers
+   add their own padding (p-4/p-5) and any hover/transition. Dedupes the
+   rounded-2xl/border/bg/shadow combo repeated across every card. */
+.card {
+  @apply rounded-2xl border border-black/5 bg-white shadow-sm;
+}
+.dark .card {
+  @apply border-white/10 bg-neutral-900;
+}

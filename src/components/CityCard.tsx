@@ -18,7 +18,7 @@ export function CityCard({ city }: { city: CityCardData }) {
   return (
     <Link
       href={`/city/${city.id}`}
-      className="group flex flex-col rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99] dark:border-white/10 dark:bg-neutral-900"
+      className="group flex flex-col card p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99]"
     >
       <div className="flex items-baseline justify-between">
         <h3 className="text-lg font-bold group-hover:text-rose-600">

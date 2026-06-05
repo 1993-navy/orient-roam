@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { PLACE_CATEGORIES } from "@/lib/validations";
 import { getUserFavoriteSets } from "@/lib/favorites";
+import { toPlaceCardData } from "@/lib/places";
 
 const DEFAULT_TAKE = 18;
 const MAX_TAKE = 50;
@@ -53,13 +54,8 @@ export async function GET(req: Request) {
   const hasMore = rows.length > take;
   const page = hasMore ? rows.slice(0, take) : rows;
 
-  const { saved, wished } = await getUserFavoriteSets(page.map((p) => p.id));
-  const places = page.map((p) => ({
-    ...p,
-    cityName: p.city.nameEn,
-    saved: saved.has(p.id),
-    wished: wished.has(p.id),
-  }));
+  const fav = await getUserFavoriteSets(page.map((p) => p.id));
+  const places = page.map((p) => toPlaceCardData(p, fav));
 
   return NextResponse.json({ places, hasMore });
 }

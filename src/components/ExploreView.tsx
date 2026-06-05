@@ -8,6 +8,8 @@ import { Icon } from "@/components/Icon";
 import { useLang } from "@/components/LanguageProvider";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
+import { FeedFooter } from "@/components/FeedFooter";
+import { pillClass } from "@/lib/ui";
 import { categoryLabel, localizedName, CATEGORY_LABELS } from "@/lib/i18n";
 import { PLACE_CATEGORIES } from "@/lib/validations";
 
@@ -179,13 +181,12 @@ export function ExploreView({
           )}
 
           {/* Infinite-scroll sentinel + status */}
-          <div ref={sentinelRef} className="py-4 text-center text-sm text-neutral-400">
-            {loading
-              ? t.loadingMore
-              : !hasMore && items.length > 0
-                ? t.endOfList
-                : ""}
-          </div>
+          <FeedFooter
+            sentinelRef={sentinelRef}
+            loading={loading}
+            hasMore={hasMore}
+            count={items.length}
+          />
         </div>
       </div>
     </div>
@@ -205,11 +206,7 @@ function FilterPill({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-        active
-          ? "bg-rose-600 text-white"
-          : "border border-black/10 bg-white hover:bg-neutral-50 dark:border-white/15 dark:bg-neutral-900 dark:hover:bg-neutral-800"
-      }`}
+      className={pillClass(active)}
     >
       {children}
     </button>
@@ -228,11 +225,7 @@ function Chip({
   return (
     <Link
       href={href}
-      className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-        active
-          ? "bg-rose-600 text-white"
-          : "border border-black/10 bg-white hover:bg-neutral-50 dark:border-white/15 dark:bg-neutral-900 dark:hover:bg-neutral-800"
-      }`}
+      className={pillClass(active)}
     >
       {children}
     </Link>
