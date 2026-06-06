@@ -72,6 +72,17 @@ export function Sidebar() {
       </Link>
 
       <nav className="flex flex-col gap-1">
+        <button
+          onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
+          className="mb-1 flex items-center gap-4 rounded-full px-3 py-2.5 text-base text-neutral-600 transition hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-900"
+          title={`${t.search} (⌘K)`}
+        >
+          <Icon name="search" className="h-6 w-6" />
+          <span className="hidden lg:inline">{t.search}</span>
+          <kbd className="ml-auto hidden rounded border border-black/10 px-1.5 py-0.5 text-[10px] text-neutral-400 lg:inline dark:border-white/15">
+            ⌘K
+          </kbd>
+        </button>
         {primary.map((it) => renderItem(it, true))}
         <div className="my-1 border-t border-black/5 dark:border-white/10" />
         {secondary.map((it) => renderItem(it, false))}

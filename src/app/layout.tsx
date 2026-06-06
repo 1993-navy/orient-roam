@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import { BottomNav } from "@/components/BottomNav";
 import { QuickNav } from "@/components/QuickNav";
+import { CommandPalette } from "@/components/CommandPalette";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { THEME_COOKIE, type Theme } from "@/components/ThemeProvider";
 import {
@@ -69,6 +70,7 @@ export default async function RootLayout({
           </div>
           <BottomNav />
           <QuickNav />
+          <CommandPalette />
           <ServiceWorker />
         </Providers>
       </body>

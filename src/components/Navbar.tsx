@@ -24,14 +24,14 @@ export function Navbar() {
         </Link>
 
         <div className="ml-auto flex items-center gap-2">
-          <Link
-            href="/explore"
+          <button
+            onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
             className="rounded-full p-2 text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
-            title={t.explore}
-            aria-label={t.searchPlaces}
+            title={t.search}
+            aria-label={t.search}
           >
             <Icon name="search" className="h-5 w-5" />
-          </Link>
+          </button>
           <Link
             href="/trips"
             className="rounded-full p-2 text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"

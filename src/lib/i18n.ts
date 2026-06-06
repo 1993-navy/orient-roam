@@ -40,6 +40,7 @@ export type UIStrings = {
   yourRating: string;
   submit: string;
   viewDetails: string;
+  onMap: string;
   backToExplore: string;
   noReviews: string;
   startMeetup: string;
@@ -61,6 +62,9 @@ export type UIStrings = {
   noTopicPosts: string;
   hashtagHint: string;
   searchPlaces: string;
+  search: string;
+  searchEverything: string;
+  places: string;
   price: string;
   rating: string;
   any: string;
@@ -108,6 +112,7 @@ export const UI: Record<Locale, UIStrings> = {
     yourRating: "Your rating",
     submit: "Submit",
     viewDetails: "View details",
+    onMap: "Map",
     backToExplore: "Back to explore",
     noReviews: "No reviews yet — be the first!",
     startMeetup: "Start a meetup",
@@ -129,6 +134,9 @@ export const UI: Record<Locale, UIStrings> = {
     noTopicPosts: "No posts with this topic yet.",
     hashtagHint: "Tip: add #topics to your review",
     searchPlaces: "Search places, food…",
+    search: "Search",
+    searchEverything: "Search cities, places, posts, topics…",
+    places: "Places",
     price: "Price",
     rating: "Rating",
     any: "Any",
@@ -174,6 +182,7 @@ export const UI: Record<Locale, UIStrings> = {
     yourRating: "你的评分",
     submit: "提交",
     viewDetails: "查看详情",
+    onMap: "地图",
     backToExplore: "返回探索",
     noReviews: "还没有评价——来当第一个吧！",
     startMeetup: "发起活动",
@@ -195,6 +204,9 @@ export const UI: Record<Locale, UIStrings> = {
     noTopicPosts: "还没有带这个话题的内容。",
     hashtagHint: "小贴士：在评价里加 #话题 试试",
     searchPlaces: "搜索景点、美食……",
+    search: "搜索",
+    searchEverything: "搜索城市、地点、帖子、话题……",
+    places: "地点",
     price: "价格",
     rating: "评分",
     any: "不限",
