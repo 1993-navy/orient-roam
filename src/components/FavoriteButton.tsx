@@ -14,17 +14,21 @@ export function FavoriteButton({
   placeId,
   kind,
   initialActive = false,
+  initialCount,
   showLabel = true,
 }: {
   placeId: string;
   kind: FavoriteKind;
   initialActive?: boolean;
+  /** When provided, show a live saver count that ticks ±1 optimistically. */
+  initialCount?: number;
   showLabel?: boolean;
 }) {
   const { status } = useSession();
   const { t } = useLang();
   const router = useRouter();
   const [active, setActive] = useState(initialActive);
+  const [count, setCount] = useState(initialCount);
   const [pending, setPending] = useState(false);
   const [bump, setBump] = useState(false); // one-shot icon bounce on activate
 
@@ -43,6 +47,7 @@ export function FavoriteButton({
     }
     const next = !active;
     setActive(next); // optimistic
+    setCount((c) => (c == null ? c : c + (next ? 1 : -1))); // optimistic ±1
     if (next) setBump(true); // bounce only when turning on (X heart pop)
     setPending(true);
     try {
@@ -54,8 +59,10 @@ export function FavoriteButton({
       if (!res.ok) throw new Error("request failed");
       const data = await res.json();
       if (typeof data.active === "boolean") setActive(data.active);
+      if (typeof data.count === "number") setCount(data.count); // authoritative
     } catch {
       setActive(!next); // revert on failure
+      setCount((c) => (c == null ? c : c + (next ? -1 : 1)));
     } finally {
       setPending(false);
     }
@@ -86,6 +93,7 @@ export function FavoriteButton({
         />
       </span>
       {showLabel && <span>{label}</span>}
+      {count != null && <span className="tabular-nums">{count}</span>}
     </button>
   );
 }

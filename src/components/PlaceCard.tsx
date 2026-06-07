@@ -18,6 +18,7 @@ export type PlaceCardData = {
   cityName?: string;
   saved?: boolean;
   wished?: boolean;
+  saveCount?: number;
 };
 
 // X-tweet-style information card: tag row → rating → title → one-line blurb
@@ -25,7 +26,7 @@ export type PlaceCardData = {
 // stretched <Link>; the content layer is pointer-transparent so taps fall
 // through to it, while the interaction buttons opt back in to receive clicks.
 export function PlaceCard({ place, rank }: { place: PlaceCardData; rank?: number }) {
-  const { locale } = useLang();
+  const { locale, t } = useLang();
   const emoji = CATEGORY_LABELS[place.category]?.emoji ?? "📍";
 
   return (
@@ -77,7 +78,20 @@ export function PlaceCard({ place, rank }: { place: PlaceCardData; rank?: number
         {/* Interaction buttons */}
         <div className="pointer-events-auto mt-1 flex items-center gap-2">
           <FavoriteButton placeId={place.id} kind="wish" initialActive={place.wished} />
-          <FavoriteButton placeId={place.id} kind="save" initialActive={place.saved} />
+          <FavoriteButton
+            placeId={place.id}
+            kind="save"
+            initialActive={place.saved}
+            initialCount={place.saveCount ?? 0}
+          />
+          {/* "Pinned on the map" — jump straight to this place's pin on the map. */}
+          <Link
+            href={`/place/${place.id}#map`}
+            aria-label={`${localizedName(place, locale)} — ${t.onMap}`}
+            className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-rose-600 transition hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950"
+          >
+            📍 {t.onMap}
+          </Link>
         </div>
       </div>
     </article>

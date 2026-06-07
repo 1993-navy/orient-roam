@@ -82,6 +82,7 @@ model Place {
   avgRating   Float   @default(0)
   reviewCount Int     @default(0)
   weightScore Float   @default(0) // Bayesian-weighted score; sort recommendations by this
+  saveCount   Int     @default(0) // cached count of "save" (收藏) favorites; recomputed on each toggle
 
   createdAt DateTime @default(now())
 

@@ -25,12 +25,20 @@ export async function POST(req: Request) {
   const where = { userId_placeId_kind: { userId, placeId, kind } };
 
   const existing = await prisma.favorite.findUnique({ where });
+  const active = !existing;
   if (existing) {
     await prisma.favorite.delete({ where });
-    return NextResponse.json({ active: false });
+  } else {
+    await prisma.favorite.create({ data: { userId, placeId, kind } });
   }
-  await prisma.favorite.create({ data: { userId, placeId, kind } });
-  return NextResponse.json({ active: true });
+
+  // For 收藏 (save), recompute and cache the live count so cards can show it.
+  if (kind === "save") {
+    const count = await prisma.favorite.count({ where: { placeId, kind: "save" } });
+    await prisma.place.update({ where: { id: placeId }, data: { saveCount: count } });
+    return NextResponse.json({ active, count });
+  }
+  return NextResponse.json({ active });
 }
 
 // List the current user's favorites (optionally filtered by ?kind=save|wish).

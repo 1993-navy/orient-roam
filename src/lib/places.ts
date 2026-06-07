@@ -9,6 +9,7 @@ type PlaceRow = {
   priceLevel: number;
   avgRating: number;
   reviewCount: number;
+  saveCount?: number;
   lng: number;
   lat: number;
   city?: { nameEn: string } | null;
@@ -30,6 +31,7 @@ export function toPlaceCardData(
     priceLevel: p.priceLevel,
     avgRating: p.avgRating,
     reviewCount: p.reviewCount,
+    saveCount: p.saveCount ?? 0,
     cityName: p.city?.nameEn,
     saved: fav?.saved.has(p.id) ?? false,
     wished: fav?.wished.has(p.id) ?? false,
