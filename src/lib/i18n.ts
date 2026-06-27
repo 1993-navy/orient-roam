@@ -17,9 +17,38 @@ export const CATEGORY_LABELS: Record<string, { en: string; zh: string; emoji: st
 };
 
 export const MEETUP_TYPE_LABELS: Record<string, { en: string; zh: string; emoji: string }> = {
-  MEAL: { en: "Group meal (拼饭)", zh: "拼饭", emoji: "🍽️" },
-  SHOPPING: { en: "Group order (拼单)", zh: "拼单", emoji: "🛒" },
-  TRIP: { en: "Travel buddy (搭子)", zh: "搭子", emoji: "🧭" },
+  MEAL: { en: "Group meal", zh: "拼饭", emoji: "🍽️" },
+  SHOPPING: { en: "Group buy", zh: "拼单", emoji: "🛒" },
+  TRIP: { en: "Travel buddy", zh: "搭子", emoji: "🧭" },
+  ACTIVITY: { en: "Regular activity", zh: "定期活动", emoji: "📅" },
+};
+
+// Report reasons (shared by ReportButton across meetups/users/etc.)
+export const REPORT_REASON_LABELS: Record<string, { en: string; zh: string }> = {
+  SPAM: { en: "Spam", zh: "垃圾信息" },
+  INAPPROPRIATE: { en: "Inappropriate", zh: "内容不当" },
+  SAFETY: { en: "Safety concern", zh: "安全顾虑" },
+  SCAM: { en: "Scam / fraud", zh: "诈骗" },
+  OTHER: { en: "Other", zh: "其他" },
+};
+
+// Foreigner-friendly attribute badges. Keys match FOREIGNER_TAGS in validations.
+export const FOREIGNER_TAG_LABELS: Record<string, { en: string; zh: string; emoji: string }> = {
+  ENGLISH_MENU: { en: "English menu", zh: "英文菜单", emoji: "📖" },
+  PICTURE_MENU: { en: "Picture menu", zh: "图片菜单", emoji: "🖼️" },
+  STAFF_ENGLISH: { en: "Staff speak English", zh: "店员会英文", emoji: "💬" },
+  CARD_PAY: { en: "Cards accepted", zh: "可刷卡", emoji: "💳" },
+  MOBILE_PAY: { en: "Mobile pay", zh: "移动支付", emoji: "📱" },
+  HALAL: { en: "Halal", zh: "清真", emoji: "🕌" },
+  VEG_FRIENDLY: { en: "Veg-friendly", zh: "素食友好", emoji: "🥗" },
+  ENGLISH_SIGN: { en: "English signage", zh: "英文标识", emoji: "🪧" },
+};
+
+export const CITY_TIER_LABELS: Record<string, { en: string; zh: string; color: string }> = {
+  MEGA: { en: "Megacity", zh: "特大城市", color: "bg-red-100 text-red-700" },
+  FIRST: { en: "1st Tier", zh: "一线城市", color: "bg-orange-100 text-orange-700" },
+  SECOND: { en: "2nd Tier", zh: "二线城市", color: "bg-amber-100 text-amber-700" },
+  THIRD: { en: "3rd Tier", zh: "三线城市", color: "bg-green-100 text-green-700" },
 };
 
 export type UIStrings = {
@@ -45,6 +74,7 @@ export type UIStrings = {
   noReviews: string;
   startMeetup: string;
   join: string;
+  joined: string;
   members: string;
   send: string;
   typeMessage: string;
@@ -90,6 +120,54 @@ export type UIStrings = {
   remove: string;
   noTrips: string;
   createTrip: string;
+  // Foreigner-friendly tags + dish-level reviews
+  foreignerFriendly: string;
+  confirmTag: string;
+  confirmed: string;
+  loginToConfirm: string;
+  dishes: string;
+  addDish: string;
+  dishNameZh: string;
+  dishNameEn: string;
+  priceOptional: string;
+  noDishes: string;
+  rateDish: string;
+  mustTry: string;
+  mustTryShort: string;
+  sortByRating: string;
+  loginToRateDish: string;
+  // Meetups: filters, restaurant link, reporting
+  findMeetups: string;
+  meetupsSubtitle: string;
+  createMeetup: string;
+  allTypes: string;
+  myMeetups: string;
+  restaurant: string;
+  placeOptional: string;
+  noPlace: string;
+  reportMeetup: string;
+  reportHost: string;
+  report: string;
+  reportReason: string;
+  reportDetail: string;
+  reportThanks: string;
+  full: string;
+  noMeetupsMine: string;
+  // Group pooling
+  groupPools: string;
+  poolsSubtitle: string;
+  createPool: string;
+  targetPeople: string;
+  perPerson: string;
+  deadline: string;
+  productLink: string;
+  joinPool: string;
+  formed: string;
+  needMore: string;
+  noPools: string;
+  reportPool: string;
+  meetupsNav: string;
+  groupChat: string;
 };
 
 export const UI: Record<Locale, UIStrings> = {
@@ -117,6 +195,7 @@ export const UI: Record<Locale, UIStrings> = {
     noReviews: "No reviews yet — be the first!",
     startMeetup: "Start a meetup",
     join: "Join",
+    joined: "Joined",
     members: "members",
     send: "Send",
     typeMessage: "Type a message…",
@@ -162,6 +241,51 @@ export const UI: Record<Locale, UIStrings> = {
     remove: "Remove",
     noTrips: "No trips yet — create one!",
     createTrip: "Create",
+    foreignerFriendly: "Foreigner-friendly",
+    confirmTag: "Confirm",
+    confirmed: "confirmed",
+    loginToConfirm: "Sign in to confirm",
+    dishes: "Dishes",
+    addDish: "Add a dish",
+    dishNameZh: "Chinese name",
+    dishNameEn: "English name",
+    priceOptional: "Price ¥ (optional)",
+    noDishes: "No dishes yet — add the first!",
+    rateDish: "Rate this dish",
+    mustTry: "Must try",
+    mustTryShort: "must-try",
+    sortByRating: "Top rated",
+    loginToRateDish: "Sign in to rate dishes",
+    findMeetups: "Find Meetups",
+    meetupsSubtitle: "Join group meals, travel buddies, and regular activities",
+    createMeetup: "Create Meetup",
+    allTypes: "All",
+    myMeetups: "My meetups",
+    restaurant: "Restaurant",
+    placeOptional: "Place (optional)",
+    noPlace: "No place",
+    reportMeetup: "Report meetup",
+    reportHost: "Report host",
+    report: "Report",
+    reportReason: "Reason",
+    reportDetail: "Details (optional)",
+    reportThanks: "Thanks — our team will review this.",
+    full: "Full",
+    noMeetupsMine: "You haven't hosted or joined any meetups yet.",
+    groupPools: "Group Pools",
+    poolsSubtitle: "Team up to hit a group-buy threshold — split bulk buys & deals",
+    createPool: "Start a pool",
+    targetPeople: "Target group size",
+    perPerson: "per person",
+    deadline: "Deadline",
+    productLink: "Product link (optional)",
+    joinPool: "Join pool",
+    formed: "Formed",
+    needMore: "more to form",
+    noPools: "No open pools — start the first one!",
+    reportPool: "Report pool",
+    meetupsNav: "Meetups",
+    groupChat: "Group chat",
   },
   zh: {
     tagline: "安心畅游中国",
@@ -187,6 +311,7 @@ export const UI: Record<Locale, UIStrings> = {
     noReviews: "还没有评价——来当第一个吧！",
     startMeetup: "发起活动",
     join: "加入",
+    joined: "已加入",
     members: "成员",
     send: "发送",
     typeMessage: "输入消息……",
@@ -232,6 +357,51 @@ export const UI: Record<Locale, UIStrings> = {
     remove: "移除",
     noTrips: "还没有行程,新建一个吧!",
     createTrip: "创建",
+    foreignerFriendly: "外国人友好",
+    confirmTag: "确认",
+    confirmed: "人确认",
+    loginToConfirm: "登录后即可确认",
+    dishes: "菜品",
+    addDish: "添加菜品",
+    dishNameZh: "中文名",
+    dishNameEn: "英文名",
+    priceOptional: "价格 ¥（可选）",
+    noDishes: "还没有菜品——来添加第一道吧！",
+    rateDish: "评价这道菜",
+    mustTry: "必点",
+    mustTryShort: "人推荐必点",
+    sortByRating: "评分最高",
+    loginToRateDish: "登录后即可评价菜品",
+    findMeetups: "发现约饭",
+    meetupsSubtitle: "加入拼饭、找搭子、参加定期活动",
+    createMeetup: "发起约饭",
+    allTypes: "全部",
+    myMeetups: "我的约饭",
+    restaurant: "餐厅",
+    placeOptional: "地点（可选）",
+    noPlace: "不指定地点",
+    reportMeetup: "举报活动",
+    reportHost: "举报房主",
+    report: "举报",
+    reportReason: "原因",
+    reportDetail: "补充说明（可选）",
+    reportThanks: "已收到，我们会尽快审核。",
+    full: "已满",
+    noMeetupsMine: "你还没有发起或报名任何约饭。",
+    groupPools: "拼团",
+    poolsSubtitle: "凑齐人数享团购价——拼单、分摊、薅羊毛",
+    createPool: "发起拼团",
+    targetPeople: "成团人数",
+    perPerson: "每人",
+    deadline: "截止时间",
+    productLink: "商品链接（可选）",
+    joinPool: "参团",
+    formed: "已成团",
+    needMore: "人即可成团",
+    noPools: "还没有进行中的拼团——来发起第一个吧！",
+    reportPool: "举报拼团",
+    meetupsNav: "约饭",
+    groupChat: "群聊",
   },
 };
 

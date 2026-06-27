@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/components/LanguageProvider";
 import { Icon } from "@/components/Icon";
@@ -27,9 +27,6 @@ function fmtTime(iso: string | null) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// WeChat-style messenger: a conversation list and a thread. On mobile only one
-// is shown at a time (tap a chat → thread, back arrow → list); on desktop both
-// sit side by side. Outgoing bubbles use the signature WeChat green.
 export function ChatView({
   me,
   conversations,
@@ -51,23 +48,57 @@ export function ChatView({
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const activeConvo = conversations.find((c) => c.id === activeId) ?? null;
 
-  const loadMessages = useCallback(async (conversationId: string) => {
+  const loadMessages = async (conversationId: string) => {
     const res = await fetch(`/api/messages?conversationId=${conversationId}`);
     if (!res.ok) return;
     const data = await res.json();
     setMessages(data.messages ?? []);
-  }, []);
+  };
 
-  // Poll the active conversation every 4s (real-time push is a later iteration).
   useEffect(() => {
-    if (!activeId) return;
+    if (!activeId) {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      return;
+    }
+
     loadMessages(activeId);
-    const interval = setInterval(() => loadMessages(activeId), 4000);
-    return () => clearInterval(interval);
-  }, [activeId, loadMessages]);
+
+    eventSourceRef.current = new EventSource(`/api/messages/stream?conversationId=${activeId}`);
+
+    eventSourceRef.current.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "new_message" && data.message) {
+          setMessages((prev) => {
+            const exists = prev.some((m) => m.id === data.message.id);
+            if (exists) return prev;
+            return [...prev, data.message];
+          });
+        }
+      } catch (e) {
+        console.error("Failed to parse SSE message:", e);
+      }
+    };
+
+    eventSourceRef.current.onerror = () => {
+      eventSourceRef.current?.close();
+      eventSourceRef.current = null;
+    };
+
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, [activeId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -83,7 +114,6 @@ export function ChatView({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ conversationId: activeId, body }),
     });
-    loadMessages(activeId);
   }
 
   async function startChat(targetUserId: string) {

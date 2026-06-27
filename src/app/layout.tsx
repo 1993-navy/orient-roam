@@ -17,12 +17,12 @@ import {
 } from "@/lib/i18n";
 
 export const metadata: Metadata = {
-  title: "Orient Roam — Wander China with confidence",
+  title: "东方漫游 · Orient Roam — Wander China with confidence",
   description:
     "Where to eat, what to see, where to sleep in China — picked by travelers, ranked by real reviews, pinned on the map.",
-  applicationName: "Orient Roam",
+  applicationName: "东方漫游 · Orient Roam",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Orient Roam", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "东方漫游 · Orient Roam", statusBarStyle: "default" },
   icons: {
     icon: "/icon-192.png",
     apple: "/icon-192.png",
@@ -64,7 +64,7 @@ export default async function RootLayout({
               <Navbar />
               <main className="flex-1 pb-20 md:pb-8">{children}</main>
               <footer className="border-t border-black/5 py-6 pb-24 text-center text-xs text-neutral-400 md:pb-6 dark:border-white/10">
-                🧭 Orient Roam · A community guide for travelers in China
+                🧭 东方漫游 · Orient Roam · A community guide for travelers in China
               </footer>
             </div>
           </div>

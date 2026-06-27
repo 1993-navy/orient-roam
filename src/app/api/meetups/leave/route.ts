@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
   const meetup = await prisma.meetup.findUnique({
     where: { id: meetupId },
-    select: { hostId: true },
+    select: { hostId: true, maxPeople: true, status: true },
   });
   if (!meetup) {
     return NextResponse.json({ error: "Meetup not found" }, { status: 404 });
@@ -34,6 +34,16 @@ export async function POST(req: Request) {
     where: { meetupId, userId },
     data: { status: "left" },
   });
+
+  // A freed slot reopens a previously-full meetup.
+  if (meetup.status === "full") {
+    const joinedCount = await prisma.meetupParticipant.count({
+      where: { meetupId, status: "joined" },
+    });
+    if (joinedCount < meetup.maxPeople) {
+      await prisma.meetup.update({ where: { id: meetupId }, data: { status: "open" } });
+    }
+  }
 
   return NextResponse.json({ ok: true });
 }

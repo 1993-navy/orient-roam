@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createCachedResponse } from "@/lib/cache";
 
-// GET /api/search?q= — site-wide command-palette search across cities,
-// places, posts and topics. Up to PER hits per group; empty q → empty groups.
 const PER = 5;
 
 export async function GET(req: Request) {
@@ -10,7 +9,8 @@ export async function GET(req: Request) {
   if (!q) {
     return NextResponse.json({ cities: [], places: [], posts: [], tags: [] });
   }
-  const like = { contains: q, mode: "insensitive" as const };
+  // SQLite's `contains` is already case-insensitive for ASCII; `mode` is Postgres-only.
+  const like = { contains: q };
 
   const [cities, places, posts, tags] = await Promise.all([
     prisma.city.findMany({
@@ -47,7 +47,7 @@ export async function GET(req: Request) {
     }),
   ]);
 
-  return NextResponse.json({
+  const result = {
     cities,
     places: places.map((p) => ({
       id: p.id,
@@ -63,5 +63,10 @@ export async function GET(req: Request) {
       authorName: p.author.name,
     })),
     tags: tags.map((t) => ({ name: t.name, count: t._count.posts + t._count.reviews })),
+  };
+
+  return createCachedResponse(result, {
+    maxAge: 300,
+    staleWhileRevalidate: 600,
   });
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AmapMap } from "@/components/AmapMap";
 import { PlaceCard, type PlaceCardData } from "@/components/PlaceCard";
+import { CityCultureView } from "@/components/CityCultureView";
 import { useLang } from "@/components/LanguageProvider";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { FeedFooter } from "@/components/FeedFooter";
@@ -16,7 +17,25 @@ export function CityView({
   initialPlaces,
   initialHasMore,
 }: {
-  city: { id: string; name: string; nameEn: string; province: string; summary: string | null; lng: number; lat: number };
+  city: { 
+    id: string; 
+    name: string; 
+    nameEn: string; 
+    province: string; 
+    summary: string | null; 
+    lng: number; 
+    lat: number;
+    history: string | null;
+    historyEn: string | null;
+    culture: string | null;
+    cultureEn: string | null;
+    cuisine: string | null;
+    cuisineEn: string | null;
+    landmarks: string | null;
+    landmarksEn: string | null;
+    stories: string | null;
+    storiesEn: string | null;
+  };
   initialPlaces: CityPlace[];
   initialHasMore: boolean;
 }) {
@@ -68,6 +87,21 @@ export function CityView({
           }))}
         />
       </div>
+
+      <CityCultureView
+        data={{
+          history: city.history,
+          historyEn: city.historyEn,
+          culture: city.culture,
+          cultureEn: city.cultureEn,
+          cuisine: city.cuisine,
+          cuisineEn: city.cuisineEn,
+          landmarks: city.landmarks,
+          landmarksEn: city.landmarksEn,
+          stories: city.stories,
+          storiesEn: city.storiesEn,
+        }}
+      />
 
       <section className="mt-8">
         <h2 className="text-xl font-bold">⭐ {t.topPicks}</h2>

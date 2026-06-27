@@ -5,6 +5,9 @@ import { AmapMap } from "@/components/AmapMap";
 import { RatingStars } from "@/components/RatingStars";
 import { ReviewForm } from "@/components/ReviewForm";
 import { AddToTripButton } from "@/components/AddToTripButton";
+import { ForeignerTags, type ForeignerTagState } from "@/components/ForeignerTags";
+import { DishList } from "@/components/DishList";
+import { type DishItem } from "@/components/DishCard";
 import { HashtagText } from "@/lib/hashtags";
 import { useLang } from "@/components/LanguageProvider";
 import {
@@ -42,13 +45,19 @@ export function PlaceDetailView({
   place,
   reviews,
   myReview,
+  foreignerTags,
+  dishes,
 }: {
   place: PlaceDetail;
   reviews: ReviewItem[];
   myReview: { rating: number; comment: string | null } | null;
+  foreignerTags: ForeignerTagState[];
+  dishes: DishItem[];
 }) {
   const { locale, t } = useLang();
   const emoji = CATEGORY_LABELS[place.category]?.emoji ?? "📍";
+  // Dish-level reviews are meaningful for eating/drinking venues.
+  const showDishes = place.category === "FOOD" || place.category === "NIGHTLIFE";
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -97,7 +106,11 @@ export function PlaceDetailView({
         <p className="mt-1 text-sm text-neutral-500">{place.address}</p>
       )}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <ForeignerTags placeId={place.id} initial={foreignerTags} />
+
+      {showDishes && <DishList placeId={place.id} dishes={dishes} />}
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div>
           <AmapMap
             center={{ lng: place.lng, lat: place.lat }}

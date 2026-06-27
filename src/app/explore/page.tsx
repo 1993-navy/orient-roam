@@ -1,14 +1,19 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { ExploreView } from "@/components/ExploreView";
 import { PLACE_CATEGORIES } from "@/lib/validations";
 import { getUserFavoriteSets } from "@/lib/favorites";
-import { toPlaceCardData } from "@/lib/places";
+import { toPlaceCardData, getPlaceForeignerTagMap } from "@/lib/places";
+import { getHybridRecommendations } from "@/lib/recommendation";
 
 export default async function ExplorePage({
   searchParams,
 }: {
   searchParams: Promise<{ city?: string; category?: string }>;
 }) {
+  const session = await auth();
+  const userId = session?.user?.id ?? undefined;
+
   const sp = await searchParams;
   const cityId = sp.city;
   const category =
@@ -16,25 +21,24 @@ export default async function ExplorePage({
       ? sp.category
       : undefined;
 
-  // First page only — the client appends more via /api/places as you scroll.
   const PAGE = 18;
   const [cities, rows] = await Promise.all([
     prisma.city.findMany({ orderBy: { nameEn: "asc" } }),
-    prisma.place.findMany({
-      where: {
-        ...(cityId ? { cityId } : {}),
-        ...(category ? { category } : {}),
-      },
-      orderBy: [{ weightScore: "desc" }, { reviewCount: "desc" }],
-      include: { city: { select: { name: true, nameEn: true } } },
-      take: PAGE + 1,
+    getHybridRecommendations({
+      userId,
+      cityId,
+      category,
+      limit: PAGE + 1,
     }),
   ]);
 
   const initialHasMore = rows.length > PAGE;
   const places = initialHasMore ? rows.slice(0, PAGE) : rows;
 
-  const { saved, wished } = await getUserFavoriteSets(places.map((p) => p.id));
+  const [{ saved, wished }, tagMap] = await Promise.all([
+    getUserFavoriteSets(places.map((p) => p.id)),
+    getPlaceForeignerTagMap(places.map((p) => p.id)),
+  ]);
 
   const selectedCity = cityId ? cities.find((c) => c.id === cityId) : undefined;
   const center = selectedCity
@@ -51,7 +55,9 @@ export default async function ExplorePage({
       center={center}
       mapZoom={selectedCity ? 11 : 5}
       initialHasMore={initialHasMore}
-      initialPlaces={places.map((p) => toPlaceCardData(p, { saved, wished }))}
+      initialPlaces={places.map((p) =>
+        toPlaceCardData(p, { saved, wished }, tagMap.get(p.id)),
+      )}
     />
   );
 }

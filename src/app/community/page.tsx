@@ -19,6 +19,7 @@ export default async function CommunityPage() {
       },
     }),
     prisma.meetup.findMany({
+      where: { NOT: { status: "removed" } },
       orderBy: { createdAt: "desc" },
       include: {
         city: { select: { nameEn: true } },
@@ -32,6 +33,7 @@ export default async function CommunityPage() {
     }),
     prisma.city.findMany({ orderBy: { nameEn: "asc" }, select: { id: true, nameEn: true } }),
     prisma.post.findMany({
+      where: { hidden: false },
       orderBy: { createdAt: "desc" },
       include: {
         author: { select: { id: true, name: true } },

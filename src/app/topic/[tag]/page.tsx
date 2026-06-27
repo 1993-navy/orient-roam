@@ -11,7 +11,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { tag } = await params;
   const name = normalizeTag(decodeURIComponent(tag));
-  return { title: `#${name} — Orient Roam` };
+  return { title: `#${name} — 东方漫游 · Orient Roam` };
 }
 
 export default async function TopicPage({
@@ -24,7 +24,7 @@ export default async function TopicPage({
 
   const [reviews, postRows] = await Promise.all([
     prisma.review.findMany({
-      where: { tags: { some: { tag: { name } } } },
+      where: { hidden: false, tags: { some: { tag: { name } } } },
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { id: true, name: true } },
@@ -32,7 +32,7 @@ export default async function TopicPage({
       },
     }),
     prisma.post.findMany({
-      where: { tags: { some: { tag: { name } } } },
+      where: { hidden: false, tags: { some: { tag: { name } } } },
       orderBy: { createdAt: "desc" },
       include: {
         author: { select: { id: true, name: true } },

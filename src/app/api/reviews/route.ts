@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { reviewSchema } from "@/lib/validations";
 import { recalcPlaceAggregates } from "@/lib/recommendation";
 import { parseHashtags } from "@/lib/hashtags";
+import { checkText } from "@/lib/moderation";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -21,6 +22,8 @@ export async function POST(req: Request) {
   }
 
   const { placeId, rating, comment } = parsed.data;
+  const flag = checkText(comment);
+  if (!flag.ok) return NextResponse.json({ error: flag.reason }, { status: 400 });
   const userId = session.user.id;
 
   // Upsert the review and recompute the place's cached weight in one transaction
@@ -49,7 +52,6 @@ export async function POST(req: Request) {
       });
       await tx.reviewTag.createMany({
         data: tagRows.map((tg) => ({ reviewId: review.id, tagId: tg.id })),
-        skipDuplicates: true,
       });
     }
 

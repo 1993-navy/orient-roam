@@ -1,13 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Allow the dev server to be reached through the cloudflared tunnel host
-  // (otherwise Next blocks cross-origin dev resources like HMR). Update this if
-  // the tunnel URL changes. Safe to remove in production.
   allowedDevOrigins: [
+    "orient-roam.com",
     "excellent-oriental-butler-justin.trycloudflare.com",
     "*.trycloudflare.com",
   ],
+  images: {
+    formats: ["image/avif", "image/webp"],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+  experimental: {
+    optimizeCss: true,
+  },
+  compress: true,
 };
 
 export default nextConfig;

@@ -4,7 +4,13 @@ import Link from "next/link";
 import { RatingStars } from "@/components/RatingStars";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { useLang } from "@/components/LanguageProvider";
-import { categoryLabel, localizedName, priceLevelLabel, CATEGORY_LABELS } from "@/lib/i18n";
+import {
+  categoryLabel,
+  localizedName,
+  priceLevelLabel,
+  CATEGORY_LABELS,
+  FOREIGNER_TAG_LABELS,
+} from "@/lib/i18n";
 
 export type PlaceCardData = {
   id: string;
@@ -19,6 +25,8 @@ export type PlaceCardData = {
   saved?: boolean;
   wished?: boolean;
   saveCount?: number;
+  /** Confirmed foreigner-friendly tags, most-confirmed first. */
+  foreignerTags?: string[];
 };
 
 // X-tweet-style information card: tag row → rating → title → one-line blurb
@@ -30,7 +38,7 @@ export function PlaceCard({ place, rank }: { place: PlaceCardData; rank?: number
   const emoji = CATEGORY_LABELS[place.category]?.emoji ?? "📍";
 
   return (
-    <article className="group relative card p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99]">
+    <article className="group relative card p-5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99] animate-fade-in">
       <Link
         href={`/place/${place.id}`}
         aria-label={localizedName(place, locale)}
@@ -41,7 +49,7 @@ export function PlaceCard({ place, rank }: { place: PlaceCardData; rank?: number
         {/* Tag row: city · category · price (X-style topic badges) */}
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           {rank != null && (
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-[11px] font-bold text-white">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-[11px] font-bold text-white animate-pop">
               {rank}
             </span>
           )}
@@ -63,14 +71,39 @@ export function PlaceCard({ place, rank }: { place: PlaceCardData; rank?: number
           <span>({place.reviewCount})</span>
         </div>
 
+        {/* Foreigner-friendly tag badges — the differentiator, surfaced on the card */}
+        {place.foreignerTags && place.foreignerTags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1">
+            {place.foreignerTags.slice(0, 4).map((tag) => {
+              const label = FOREIGNER_TAG_LABELS[tag];
+              if (!label) return null;
+              return (
+                <span
+                  key={tag}
+                  title={label[locale]}
+                  className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                >
+                  <span aria-hidden="true">{label.emoji}</span>
+                  <span>{label[locale]}</span>
+                </span>
+              );
+            })}
+            {place.foreignerTags.length > 4 && (
+              <span className="text-[11px] text-neutral-400">
+                +{place.foreignerTags.length - 4}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Title */}
-        <h3 className="text-lg font-bold leading-snug group-hover:text-rose-600">
+        <h3 className="text-lg font-bold leading-snug group-hover:text-rose-600 transition-colors duration-200">
           {localizedName(place, locale)}
         </h3>
 
         {/* One-line blurb — expands on hover/focus-within */}
         {(place.description ?? categoryLabel(place.category, locale)) && (
-          <p className="line-clamp-1 text-sm text-neutral-500 transition-all group-hover:line-clamp-none group-focus-within:line-clamp-none dark:text-neutral-400">
+          <p className="line-clamp-1 text-sm text-neutral-500 transition-all duration-300 group-hover:line-clamp-none group-focus-within:line-clamp-none dark:text-neutral-400">
             {place.description ?? categoryLabel(place.category, locale)}
           </p>
         )}
@@ -88,7 +121,7 @@ export function PlaceCard({ place, rank }: { place: PlaceCardData; rank?: number
           <Link
             href={`/place/${place.id}#map`}
             aria-label={`${localizedName(place, locale)} — ${t.onMap}`}
-            className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-rose-600 transition hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950"
+            className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-rose-600 transition-all duration-200 hover:bg-rose-50 hover:scale-105 dark:text-rose-400 dark:hover:bg-rose-950"
           >
             📍 {t.onMap}
           </Link>
@@ -107,7 +140,7 @@ function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-neutral-600 transition-colors duration-200 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 ${className}`}
     >
       {children}
     </span>

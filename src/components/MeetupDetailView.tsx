@@ -4,9 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/components/LanguageProvider";
-import { MEETUP_TYPE_LABELS } from "@/lib/i18n";
+import { MEETUP_TYPE_LABELS, FOREIGNER_TAG_LABELS } from "@/lib/i18n";
 import { Avatar } from "@/components/Avatar";
 import { MessageButton } from "@/components/MessageButton";
+import { ReportButton } from "@/components/ReportButton";
+import { GroupChatButton } from "@/components/GroupChatButton";
 
 type Member = { id: string; name: string };
 
@@ -18,10 +20,14 @@ type MeetupDetail = {
   cityName: string | null;
   placeId: string | null;
   placeName: string | null;
+  placeForeignerTags?: string[];
   hostId: string;
   hostName: string;
   startTime: string | null;
+  endTime: string | null;
   maxPeople: number;
+  recurrence: string;
+  recurrenceDay: number | null;
 };
 
 export function MeetupDetailView({
@@ -37,7 +43,7 @@ export function MeetupDetailView({
   members: Member[];
   meetup: MeetupDetail;
 }) {
-  const { t } = useLang();
+  const { t, locale } = useLang();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const label = MEETUP_TYPE_LABELS[meetup.type];
@@ -56,8 +62,8 @@ export function MeetupDetailView({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <Link href="/community" className="text-sm text-neutral-500 hover:text-rose-600">
-        ← {t.community}
+      <Link href="/meetups" className="text-sm text-neutral-500 hover:text-rose-600">
+        ← {t.findMeetups}
       </Link>
 
       <div className="mt-3 card p-5">
@@ -75,7 +81,26 @@ export function MeetupDetailView({
         <div className="mt-4 space-y-1 text-sm text-neutral-500">
           {meetup.startTime && (
             <p>
-              🕒 {t.when}: {new Date(meetup.startTime).toLocaleString()}
+              🕒 {t.when}:{" "}
+              <span className="font-medium text-neutral-700 dark:text-neutral-300">
+                {new Date(meetup.startTime).toLocaleString()}
+              </span>
+              {meetup.endTime && (
+                <span className="ml-1">
+                  → {new Date(meetup.endTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              )}
+            </p>
+          )}
+          {meetup.recurrence !== "none" && (
+            <p>
+              🔄{" "}
+              {meetup.recurrence === "weekly"
+                ? `Every ${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][(meetup.recurrenceDay || 1) - 1]}`
+                : `Every ${meetup.recurrenceDay}th of month`}
             </p>
           )}
           {meetup.placeName && (
@@ -89,6 +114,24 @@ export function MeetupDetailView({
                 meetup.placeName
               )}
             </p>
+          )}
+          {meetup.placeForeignerTags && meetup.placeForeignerTags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1 pt-0.5">
+              {meetup.placeForeignerTags.slice(0, 5).map((tag) => {
+                const fl = FOREIGNER_TAG_LABELS[tag];
+                if (!fl) return null;
+                return (
+                  <span
+                    key={tag}
+                    title={fl[locale]}
+                    className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                  >
+                    <span aria-hidden="true">{fl.emoji}</span>
+                    <span>{fl[locale]}</span>
+                  </span>
+                );
+              })}
+            </div>
           )}
           <p>
             👤{" "}
@@ -107,6 +150,7 @@ export function MeetupDetailView({
               {t.signIn}
             </Link>
           )}
+          {meId && (isHost || isJoined) && <GroupChatButton kind="meetup" id={meetup.id} />}
           {meId && isHost && <span className="text-sm text-neutral-400">{t.hosting}</span>}
           {meId && !isHost && !isJoined && (
             <button
@@ -133,6 +177,14 @@ export function MeetupDetailView({
             />
           )}
         </div>
+
+        {/* Safety: report this meetup or its host (anyone signed in, not the host) */}
+        {meId && !isHost && (
+          <div className="mt-3 flex flex-wrap gap-2 border-t border-black/5 pt-3 dark:border-white/10">
+            <ReportButton targetType="MEETUP" targetId={meetup.id} label={t.reportMeetup} />
+            <ReportButton targetType="USER" targetId={meetup.hostId} label={t.reportHost} />
+          </div>
+        )}
       </div>
 
       <section className="mt-6">

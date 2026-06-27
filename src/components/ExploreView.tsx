@@ -10,8 +10,13 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { FeedFooter } from "@/components/FeedFooter";
 import { pillClass } from "@/lib/ui";
-import { categoryLabel, localizedName, CATEGORY_LABELS } from "@/lib/i18n";
-import { PLACE_CATEGORIES } from "@/lib/validations";
+import {
+  categoryLabel,
+  localizedName,
+  CATEGORY_LABELS,
+  FOREIGNER_TAG_LABELS,
+} from "@/lib/i18n";
+import { PLACE_CATEGORIES, FOREIGNER_TAGS } from "@/lib/validations";
 
 type ExplorePlace = PlaceCardData & { lng: number; lat: number };
 
@@ -43,7 +48,14 @@ export function ExploreView({
   const [qInput, setQInput] = useState("");
   const [price, setPrice] = useState("");
   const [minRating, setMinRating] = useState("");
+  const [ftags, setFtags] = useState<string[]>([]);
   const q = useDebounce(qInput.trim(), 300);
+
+  function toggleFtag(tag: string) {
+    setFtags((prev) =>
+      prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag],
+    );
+  }
 
   const query = useMemo(() => {
     const usp = new URLSearchParams();
@@ -52,8 +64,9 @@ export function ExploreView({
     if (q) usp.set("q", q);
     if (price) usp.set("priceLevel", price);
     if (minRating) usp.set("minRating", minRating);
+    if (ftags.length) usp.set("foreignerTags", ftags.join(","));
     return usp.toString();
-  }, [currentCity, category, q, price, minRating]);
+  }, [currentCity, category, q, price, minRating, ftags]);
 
   const { items, hasMore, loading, sentinelRef } = useInfiniteList<ExplorePlace>({
     endpoint: "/api/places",
@@ -131,6 +144,23 @@ export function ExploreView({
               ★{r}+
             </FilterPill>
           ))}
+        </div>
+
+        {/* Foreigner-friendly tag filter (multi-select, AND) — the differentiator */}
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-neutral-400">🌐 {t.foreignerFriendly}:</span>
+          {FOREIGNER_TAGS.map((tag) => {
+            const label = FOREIGNER_TAG_LABELS[tag];
+            return (
+              <FilterPill
+                key={tag}
+                active={ftags.includes(tag)}
+                onClick={() => toggleFtag(tag)}
+              >
+                {label.emoji} {label[locale]}
+              </FilterPill>
+            );
+          })}
         </div>
       </div>
 

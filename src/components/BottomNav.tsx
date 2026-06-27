@@ -14,7 +14,7 @@ export function BottomNav() {
 
   const tabs: { href: string; icon: IconName; label: string }[] = [
     { href: "/", icon: "home", label: t.home },
-    { href: "/cities", icon: "city", label: t.cities },
+    { href: "/meetups", icon: "meetup", label: t.meetupsNav },
     { href: "/community", icon: "community", label: t.community },
     { href: "/chat", icon: "chat", label: t.chat },
   ];

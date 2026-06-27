@@ -45,3 +45,13 @@ next-env.d.ts
 
 # netlify
 .netlify
+
+# local dev/build logs
+_*.log
+_*.out
+
+# local tooling binaries (e.g. cloudflared)
+/bin
+
+# claude code local settings
+/.claude

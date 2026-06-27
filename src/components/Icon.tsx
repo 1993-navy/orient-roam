@@ -21,7 +21,8 @@ export type IconName =
   | "plus"
   | "back"
   | "hash"
-  | "route";
+  | "route"
+  | "meetup"; // 活动 / meetup
 
 // 24x24 viewBox, 1.8 stroke, round caps/joins — a calm, X-like line style.
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -89,6 +90,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <circle cx="6" cy="19" r="2" />
       <circle cx="18" cy="5" r="2" />
       <path d="M8 19h6a3 3 0 0 0 3-3V9" />
+    </>
+  ),
+  meetup: (
+    <>
+      <path d="M3 18h18" />
+      <path d="M3 12h18" />
+      <path d="M8 6h8" />
     </>
   ),
 };

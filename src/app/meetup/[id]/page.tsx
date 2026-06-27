@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { MeetupDetailView } from "@/components/MeetupDetailView";
+import { getPlaceForeignerTagMap } from "@/lib/places";
 
 export default async function MeetupPage({
   params,
@@ -32,6 +33,10 @@ export default async function MeetupPage({
     name: p.user.name,
   }));
 
+  const placeForeignerTags = meetup.place
+    ? (await getPlaceForeignerTagMap([meetup.place.id])).get(meetup.place.id) ?? []
+    : [];
+
   return (
     <MeetupDetailView
       meId={me}
@@ -46,10 +51,14 @@ export default async function MeetupPage({
         cityName: meetup.city?.nameEn ?? null,
         placeId: meetup.place?.id ?? null,
         placeName: meetup.place?.nameEn ?? null,
+        placeForeignerTags,
         hostId: meetup.host.id,
         hostName: meetup.host.name,
         startTime: meetup.startTime?.toISOString() ?? null,
+        endTime: meetup.endTime?.toISOString() ?? null,
         maxPeople: meetup.maxPeople,
+        recurrence: meetup.recurrence,
+        recurrenceDay: meetup.recurrenceDay,
       }}
     />
   );

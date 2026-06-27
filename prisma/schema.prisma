@@ -12,7 +12,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   // The build step (scripts/netlify-db-setup.mjs) sets DATABASE_URL from whichever
   // Netlify DB var is present; at runtime lib/prisma.ts resolves it too.
   url      = env("DATABASE_URL")
@@ -29,7 +29,12 @@ model User {
   bio          String?
   homeCountry  String? // e.g. "United States"
   languages    String? // comma-separated, e.g. "en,zh,es"
+  role         String   @default("user")   // user | admin
+  status       String   @default("active") // active | suspended
   createdAt    DateTime @default(now())
+
+  avgRating    Float    @default(0)
+  ratingCount  Int      @default(0)
 
   reviews            Review[]
   favorites          Favorite[]
@@ -42,6 +47,19 @@ model User {
   posts              Post[]               @relation("UserPosts")
   postLikes          PostLike[]
   trips              Trip[]               @relation("UserTrips")
+  receivedRatings    UserRating[]         @relation("ReceivedRatings")
+  givenRatings       UserRating[]         @relation("GivenRatings")
+  preferences        UserPreference[]
+  placeInteractions  UserPlaceInteraction[]
+  dishReviews        DishReview[]
+  foreignerTags      PlaceForeignerTag[]
+  reportsMade        Report[]             @relation("ReportsMade")
+  moderationActions  ModerationAction[]   @relation("ModActions")
+  organizedPools     GroupPool[]          @relation("PoolsOrganized")
+  poolMemberships    PoolMember[]
+
+  @@index([email])
+  @@index([createdAt])
 }
 
 // ----------------------------- Places ----------------------------
@@ -55,12 +73,26 @@ model City {
   lng         Float
   summary     String?
   coverImage  String?
+  tier        String  @default("THIRD") // MEGA | FIRST | SECOND | THIRD
+  isLivable   Boolean @default(false)
+
+  history     String? // 历史介绍
+  historyEn   String? // English history
+  culture     String? // 文化特色
+  cultureEn   String? // English culture
+  cuisine     String? // 美食文化
+  cuisineEn   String? // English cuisine
+  landmarks   String? // 经典景点介绍
+  landmarksEn String? // English landmarks
+  stories     String? // 典故传说
+  storiesEn   String? // English stories
 
   places      Place[]
   communities Community[]
   meetups     Meetup[]
   posts       Post[]
   trips       Trip[]
+  pools       GroupPool[]
 }
 
 model Place {
@@ -86,10 +118,14 @@ model Place {
 
   createdAt DateTime @default(now())
 
-  reviews   Review[]
-  favorites Favorite[]
-  meetups   Meetup[]
-  tripStops TripStop[]
+  reviews            Review[]
+  favorites          Favorite[]
+  meetups            Meetup[]
+  tripStops          TripStop[]
+  userInteractions   UserPlaceInteraction[]
+  dishes             Dish[]
+  foreignerTags      PlaceForeignerTag[]
+  pools              GroupPool[]
 
   @@index([cityId, category])
   @@index([weightScore])
@@ -103,6 +139,7 @@ model Review {
   place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
   rating    Int // 1..5
   comment   String?
+  hidden    Boolean  @default(false) // hidden by moderation
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -134,6 +171,8 @@ model Conversation {
 
   members  ConversationMember[]
   messages Message[]
+
+  @@index([createdAt])
 }
 
 model ConversationMember {
@@ -145,6 +184,7 @@ model ConversationMember {
   joinedAt       DateTime     @default(now())
 
   @@id([conversationId, userId])
+  @@index([userId])
 }
 
 model Message {
@@ -184,10 +224,10 @@ model CommunityMember {
   @@id([communityId, userId])
 }
 
-// Meetup = 搭子 / 拼单 / 拼饭
+// Meetup = 搭子 / 拼单 / 拼饭 / 定期活动
 model Meetup {
   id          String    @id @default(cuid())
-  // type: MEAL (拼饭) | SHOPPING (拼单) | TRIP (搭子/同游)
+  // type: MEAL (拼饭) | SHOPPING (拼单) | TRIP (搭子/同游) | ACTIVITY (定期活动)
   type        String
   title       String
   description String?
@@ -198,11 +238,21 @@ model Meetup {
   hostId      String
   host        User      @relation("MeetupHost", fields: [hostId], references: [id])
   startTime   DateTime?
+  endTime     DateTime?
   maxPeople   Int       @default(4)
-  status      String    @default("open") // open | full | closed
+  status      String    @default("open") // open | full | closed | cancelled
+  // recurrence: none | weekly | monthly
+  recurrence  String    @default("none")
+  // For recurring meetups: dayOfWeek (1-7, Monday=1) or dayOfMonth (1-31)
+  recurrenceDay Int?
+  conversationId String? // group chat created for this meetup
   createdAt   DateTime  @default(now())
 
   participants MeetupParticipant[]
+
+  @@index([status, startTime])
+  @@index([cityId, type])
+  @@index([hostId])
 }
 
 model MeetupParticipant {
@@ -250,6 +300,7 @@ model Post {
   cityId    String?
   city      City?      @relation(fields: [cityId], references: [id])
   likeCount Int        @default(0) // cached; recomputed on each like toggle
+  hidden    Boolean    @default(false) // hidden by moderation
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
@@ -278,6 +329,55 @@ model PostTag {
 
   @@id([postId, tagId])
   @@index([tagId])
+}
+
+// --------------------------- User Ratings ------------------------
+
+// User rating system (like Facebook) - users can rate each other after meetups
+model UserRating {
+  id           String   @id @default(cuid())
+  raterId      String
+  rater        User     @relation("GivenRatings", fields: [raterId], references: [id], onDelete: Cascade)
+  ratedId      String
+  rated        User     @relation("ReceivedRatings", fields: [ratedId], references: [id], onDelete: Cascade)
+  rating       Int      // 1..5 stars
+  comment      String?  // Optional feedback
+  meetupId     String?  // Optional reference to the meetup where they met
+  createdAt    DateTime @default(now())
+
+  @@unique([raterId, ratedId]) // one rating per rater per rated user
+  @@index([ratedId])
+  @@index([raterId])
+}
+
+// --------------------------- User Preferences ------------------------
+
+// User preference tracking for personalized recommendations
+model UserPreference {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    String   // Place category: FOOD | ATTRACTION | HOTEL | NATURE | NIGHTLIFE | SHOPPING
+  score       Float    @default(0) // Preference score, higher = more interested
+  lastVisited DateTime @default(now())
+
+  @@unique([userId, category])
+  @@index([userId])
+}
+
+// User place interaction tracking for recommendations
+model UserPlaceInteraction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  placeId     String
+  place       Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  // type: VIEW | SAVE | WISH | REVIEW | LIKE | VISIT
+  type        String
+  createdAt   DateTime @default(now())
+
+  @@index([userId, placeId])
+  @@index([userId, createdAt])
 }
 
 // --------------------------- Trips / 行程 ------------------------
@@ -309,4 +409,147 @@ model TripStop {
 
   @@unique([tripId, placeId]) // a place appears at most once per trip
   @@index([tripId, day])
+}
+
+// --------------------- Dishes / 菜品级评价 ----------------------
+
+// A single menu item under a Place (foreigner-facing dish-level reviews).
+// Aggregates (avgRating/reviewCount/mustTryCount) are cached and recomputed on
+// each DishReview write — mirroring Place's cached aggregates.
+model Dish {
+  id          String  @id @default(cuid())
+  placeId     String
+  place       Place   @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  name        String // 中文名
+  nameEn      String // English name
+  description String?
+  photoUrl    String?
+  priceCents  Int? // optional menu price, in 分 (cents)
+
+  // Cached aggregates (recomputed on each dish-review write).
+  avgRating    Float @default(0)
+  reviewCount  Int   @default(0)
+  mustTryCount Int   @default(0) // how many reviewers flagged "must try"
+
+  createdById String? // who added the dish (for later moderation)
+  createdAt   DateTime @default(now())
+
+  reviews     DishReview[]
+
+  @@index([placeId])
+  @@index([placeId, avgRating])
+}
+
+model DishReview {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dishId    String
+  dish      Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  rating    Int // 1..5
+  comment   String?
+  mustTry   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, dishId]) // one review per user per dish (updatable)
+  @@index([dishId])
+}
+
+// Community confirmation of a foreigner-friendly attribute for a Place. Each
+// user can confirm a given tag for a given place at most once. Counts are
+// computed on read (groupBy) rather than cached.
+model PlaceForeignerTag {
+  placeId   String
+  place     Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // tag: ENGLISH_MENU | PICTURE_MENU | STAFF_ENGLISH | CARD_PAY | MOBILE_PAY | HALAL | VEG_FRIENDLY | ENGLISH_SIGN
+  tag       String
+  createdAt DateTime @default(now())
+
+  @@id([placeId, userId, tag])
+  @@index([placeId, tag])
+}
+
+// ----------------------------- Reports ---------------------------
+
+// A user-submitted report against any moderatable entity. Reusable across
+// meetups, users, reviews and places — captures the signal now; the moderation
+// queue UI is a later iteration (priority ⑤).
+model Report {
+  id         String   @id @default(cuid())
+  reporterId String
+  reporter   User     @relation("ReportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
+  // targetType: MEETUP | USER | REVIEW | PLACE
+  targetType String
+  targetId   String
+  // reason: SPAM | INAPPROPRIATE | SAFETY | SCAM | OTHER
+  reason     String
+  detail     String?
+  status     String   @default("open") // open | reviewed | dismissed
+  createdAt  DateTime @default(now())
+
+  @@unique([reporterId, targetType, targetId]) // one report per user per target
+  @@index([targetType, targetId])
+  @@index([status])
+}
+
+// Audit log: every moderation action a moderator takes, for traceability.
+model ModerationAction {
+  id          String   @id @default(cuid())
+  moderatorId String
+  moderator   User     @relation("ModActions", fields: [moderatorId], references: [id], onDelete: Cascade)
+  reportId    String? // the report this action resolved, if any
+  // action: DISMISS | HIDE_CONTENT | SUSPEND_USER | UNSUSPEND_USER
+  action      String
+  // targetType: MEETUP | USER | REVIEW | POST | PLACE
+  targetType  String
+  targetId    String
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
+}
+
+// ----------------------- Group Pooling / 拼团 --------------------
+
+// Headcount-based group buy: forms once `targetPeople` join. unitPriceCents is
+// informational (per-share price); no real payment in this iteration.
+model GroupPool {
+  id             String    @id @default(cuid())
+  organizerId    String
+  organizer      User      @relation("PoolsOrganized", fields: [organizerId], references: [id])
+  title          String
+  description    String?
+  cityId         String?
+  city           City?     @relation(fields: [cityId], references: [id])
+  placeId        String?
+  place          Place?    @relation(fields: [placeId], references: [id])
+  productUrl     String?
+  unitPriceCents Int? // optional per-person price, in 分 (cents)
+  targetPeople   Int // 成团门槛
+  maxPeople      Int? // optional cap
+  deadline       DateTime?
+  status         String    @default("open") // open | formed | closed | cancelled | removed
+  conversationId String? // group chat created for this pool
+  createdAt      DateTime  @default(now())
+
+  members PoolMember[]
+
+  @@index([status, deadline])
+  @@index([cityId])
+}
+
+model PoolMember {
+  poolId   String
+  pool     GroupPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  qty      Int       @default(1)
+  status   String    @default("joined") // joined | left
+  joinedAt DateTime  @default(now())
+
+  @@id([poolId, userId])
 }

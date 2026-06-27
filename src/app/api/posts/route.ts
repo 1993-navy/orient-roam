@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 import { postSchema } from "@/lib/validations";
 import { parseHashtags } from "@/lib/hashtags";
 import { getUserPostLikes } from "@/lib/posts";
+import { createCachedResponse } from "@/lib/cache";
+import { checkText } from "@/lib/moderation";
 
 const DEFAULT_TAKE = 15;
 const MAX_TAKE = 50;
@@ -23,6 +25,7 @@ export async function GET(req: Request) {
   );
 
   const where: Prisma.PostWhereInput = {
+    hidden: false,
     ...(cityId ? { cityId } : {}),
     ...(tag ? { tags: { some: { tag: { name: tag } } } } : {}),
   };
@@ -42,18 +45,25 @@ export async function GET(req: Request) {
   const page = hasMore ? rows.slice(0, take) : rows;
   const liked = await getUserPostLikes(page.map((p) => p.id));
 
-  const posts = page.map((p) => ({
-    id: p.id,
-    body: p.body,
-    createdAt: p.createdAt,
-    authorId: p.author.id,
-    authorName: p.author.name,
-    cityName: p.city?.nameEn ?? null,
-    likeCount: p.likeCount,
-    liked: liked.has(p.id),
-  }));
+  const result = {
+    posts: page.map((p) => ({
+      id: p.id,
+      body: p.body,
+      createdAt: p.createdAt,
+      authorId: p.author.id,
+      authorName: p.author.name,
+      cityName: p.city?.nameEn ?? null,
+      likeCount: p.likeCount,
+      liked: liked.has(p.id),
+    })),
+    hasMore,
+  };
 
-  return NextResponse.json({ posts, hasMore });
+  return createCachedResponse(result, {
+    maxAge: 30,
+    staleWhileRevalidate: 120,
+    cachePrivate: true,
+  });
 }
 
 // POST /api/posts — create a post; #hashtags in the body are linked to Tag
@@ -74,6 +84,8 @@ export async function POST(req: Request) {
   }
 
   const { body, cityId } = parsed.data;
+  const flag = checkText(body);
+  if (!flag.ok) return NextResponse.json({ error: flag.reason }, { status: 400 });
   const userId = session.user.id;
 
   const post = await prisma.$transaction(async (tx) => {
@@ -94,7 +106,6 @@ export async function POST(req: Request) {
       });
       await tx.postTag.createMany({
         data: tagRows.map((tg) => ({ postId: created.id, tagId: tg.id })),
-        skipDuplicates: true,
       });
     }
 

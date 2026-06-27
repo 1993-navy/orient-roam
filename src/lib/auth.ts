@@ -28,6 +28,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         if (!user) return null;
 
+        // Suspended accounts can't sign in (moderation enforcement).
+        if (user.status === "suspended") return null;
+
         const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
         if (!ok) return null;
 
@@ -36,18 +39,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           name: user.name,
           image: user.avatarUrl ?? undefined,
+          role: user.role,
         };
       },
     }),
   ],
   callbacks: {
     jwt({ token, user }) {
-      if (user) token.id = user.id;
+      if (user) {
+        token.id = user.id;
+        token.role = (user as { role?: string }).role ?? "user";
+      }
       return token;
     },
     session({ session, token }) {
       if (token.id && session.user) {
         session.user.id = token.id as string;
+        session.user.role = (token.role as string) ?? "user";
       }
       return session;
     },

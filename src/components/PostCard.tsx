@@ -18,13 +18,13 @@ export type PostCardData = {
 
 export function PostCard({ post }: { post: PostCardData }) {
   return (
-    <article className="card p-4 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg">
+    <article className="card p-4 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg animate-fade-in">
       <div className="flex items-center gap-2">
-        <Avatar name={post.authorName} className="h-9 w-9 text-sm" square />
+        <Avatar name={post.authorName} className="h-9 w-9 text-sm transition-transform duration-200 hover:scale-110" square />
         <div className="min-w-0">
           <Link
             href={`/profile/${post.authorId}`}
-            className="font-semibold hover:text-rose-600"
+            className="font-semibold hover:text-rose-600 transition-colors duration-200"
           >
             {post.authorName}
           </Link>
