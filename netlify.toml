@@ -5,6 +5,7 @@
   # On Netlify the Neon extension injects the DB URL, so we create the schema
   # (db push) and seed (idempotent) at build time, then build Next.
   command = "prisma generate && node scripts/netlify-db-setup.mjs && next build"
+  publish = ".next"
 
 [build.environment]
   # Prisma needs a fixed binary target on Netlify's build image.
