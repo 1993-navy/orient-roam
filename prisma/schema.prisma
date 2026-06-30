@@ -1,9 +1,9 @@
 // Orient Roam — data model
 //
-// Dev uses SQLite. To deploy on PostgreSQL, change `provider` below to
-// "postgresql" and point DATABASE_URL at your Postgres instance — every model
-// here is portable (we avoid Prisma enums / scalar lists, which SQLite lacks,
-// using String fields with documented allowed values instead).
+// Datasource is PostgreSQL (Netlify Neon in production; point DATABASE_URL at a
+// local or hosted Postgres for development). Every model here is portable — we
+// avoid Prisma enums / scalar lists, using String fields with documented
+// allowed values instead.
 
 generator client {
   provider      = "prisma-client-js"
@@ -12,7 +12,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   // The build step (scripts/netlify-db-setup.mjs) sets DATABASE_URL from whichever
   // Netlify DB var is present; at runtime lib/prisma.ts resolves it too.
   url      = env("DATABASE_URL")
