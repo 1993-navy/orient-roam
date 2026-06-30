@@ -118,7 +118,7 @@ export const FOREIGNER_TAGS = [
 export type ForeignerTag = (typeof FOREIGNER_TAGS)[number];
 
 // Reports — reusable moderation signal across entities (priority ⑤ groundwork).
-export const REPORT_TARGET_TYPES = ["MEETUP", "USER", "REVIEW", "POST", "PLACE", "POOL"] as const;
+export const REPORT_TARGET_TYPES = ["MEETUP", "USER", "REVIEW", "POST", "PLACE", "POOL", "DISH_REVIEW"] as const;
 export const REPORT_REASONS = [
   "SPAM",
   "INAPPROPRIATE",

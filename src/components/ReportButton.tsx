@@ -14,7 +14,7 @@ export function ReportButton({
   targetId,
   label,
 }: {
-  targetType: "MEETUP" | "USER" | "REVIEW" | "POST" | "PLACE" | "POOL";
+  targetType: "MEETUP" | "USER" | "REVIEW" | "POST" | "PLACE" | "POOL" | "DISH_REVIEW";
   targetId: string;
   label: string;
 }) {

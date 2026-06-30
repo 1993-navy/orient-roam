@@ -3,8 +3,17 @@
 import { useState } from "react";
 import { RatingStars } from "@/components/RatingStars";
 import { DishReviewForm } from "@/components/DishReviewForm";
+import { ReportButton } from "@/components/ReportButton";
 import { useLang } from "@/components/LanguageProvider";
 import { localizedName } from "@/lib/i18n";
+
+export type DishReviewItem = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  mustTry: boolean;
+  userName: string;
+};
 
 export type DishItem = {
   id: string;
@@ -16,6 +25,7 @@ export type DishItem = {
   reviewCount: number;
   mustTryCount: number;
   myReview: { rating: number; comment: string | null; mustTry: boolean } | null;
+  reviews: DishReviewItem[];
 };
 
 function priceLabel(cents: number | null): string | null {
@@ -82,6 +92,32 @@ export function DishCard({ dish }: { dish: DishItem }) {
           existing={dish.myReview}
           onSaved={() => setOpen(false)}
         />
+      )}
+
+      {dish.reviews.length > 0 && (
+        <ul className="mt-3 space-y-2 border-t border-black/5 pt-3 dark:border-white/10">
+          {dish.reviews.map((r) => (
+            <li key={r.id} className="text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <RatingStars value={r.rating} className="text-xs" />
+                  <span className="truncate text-xs font-medium text-neutral-700 dark:text-neutral-200">
+                    {r.userName}
+                  </span>
+                  {r.mustTry && (
+                    <span title={t.mustTryShort} className="text-xs">
+                      ⭐
+                    </span>
+                  )}
+                </div>
+                <ReportButton targetType="DISH_REVIEW" targetId={r.id} label={t.report} />
+              </div>
+              {r.comment && (
+                <p className="mt-1 text-neutral-600 dark:text-neutral-300">{r.comment}</p>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
     </li>
   );

@@ -9,12 +9,12 @@ export type QueueItem = {
   reason: string;
   detail: string | null;
   createdAt: string;
-  targetType: string; // MEETUP | USER | REVIEW | POST | PLACE
+  targetType: string; // MEETUP | USER | REVIEW | POST | PLACE | POOL | DISH_REVIEW
   targetId: string;
   // Resolved context about the reported entity (best-effort).
   contextTitle: string; // e.g. meetup title, user name, place name
   contextBody: string | null; // review/post text, etc.
-  canHide: boolean; // HIDE_CONTENT applies (REVIEW/POST/MEETUP)
+  canHide: boolean; // HIDE_CONTENT applies (REVIEW/POST/MEETUP/POOL/DISH_REVIEW)
   canSuspend: boolean; // SUSPEND_USER applies (USER, or content author)
   suspendUserId: string | null;
 };

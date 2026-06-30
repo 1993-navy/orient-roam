@@ -9,11 +9,11 @@ export async function recalcDishAggregates(
 ): Promise<void> {
   const [agg, mustTryCount] = await Promise.all([
     tx.dishReview.aggregate({
-      where: { dishId },
+      where: { dishId, hidden: false },
       _avg: { rating: true },
       _count: { rating: true },
     }),
-    tx.dishReview.count({ where: { dishId, mustTry: true } }),
+    tx.dishReview.count({ where: { dishId, mustTry: true, hidden: false } }),
   ]);
 
   await tx.dish.update({

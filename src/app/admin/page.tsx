@@ -26,7 +26,7 @@ export default async function AdminPage() {
   const ids = (type: string) =>
     reports.filter((r) => r.targetType === type).map((r) => r.targetId);
 
-  const [meetups, reviews, posts, users, places, pools] = await Promise.all([
+  const [meetups, reviews, posts, users, places, pools, dishReviews] = await Promise.all([
     prisma.meetup.findMany({
       where: { id: { in: ids("MEETUP") } },
       select: { id: true, title: true, hostId: true },
@@ -51,6 +51,15 @@ export default async function AdminPage() {
       where: { id: { in: ids("POOL") } },
       select: { id: true, title: true, organizerId: true },
     }),
+    prisma.dishReview.findMany({
+      where: { id: { in: ids("DISH_REVIEW") } },
+      select: {
+        id: true,
+        comment: true,
+        userId: true,
+        dish: { select: { nameEn: true, place: { select: { nameEn: true } } } },
+      },
+    }),
   ]);
 
   const meetupMap = new Map(meetups.map((m) => [m.id, m]));
@@ -59,6 +68,7 @@ export default async function AdminPage() {
   const postMap = new Map(posts.map((p) => [p.id, p]));
   const userMap = new Map(users.map((u) => [u.id, u]));
   const placeMap = new Map(places.map((p) => [p.id, p]));
+  const dishReviewMap = new Map(dishReviews.map((d) => [d.id, d]));
 
   const items: QueueItem[] = reports.map((r) => {
     let contextTitle = `${r.targetType} ${r.targetId}`;
@@ -90,6 +100,13 @@ export default async function AdminPage() {
     } else if (r.targetType === "PLACE") {
       const pl = placeMap.get(r.targetId);
       contextTitle = pl ? `Place: ${pl.nameEn}` : "Place (deleted)";
+    } else if (r.targetType === "DISH_REVIEW") {
+      const dr = dishReviewMap.get(r.targetId);
+      contextTitle = dr
+        ? `Dish review: ${dr.dish.nameEn} @ ${dr.dish.place.nameEn}`
+        : "Dish review (deleted)";
+      contextBody = dr?.comment ?? null;
+      suspendUserId = dr?.userId ?? null;
     }
 
     return {
@@ -102,7 +119,7 @@ export default async function AdminPage() {
       targetId: r.targetId,
       contextTitle,
       contextBody,
-      canHide: ["REVIEW", "POST", "MEETUP", "POOL"].includes(r.targetType),
+      canHide: ["REVIEW", "POST", "MEETUP", "POOL", "DISH_REVIEW"].includes(r.targetType),
       canSuspend: Boolean(suspendUserId),
       suspendUserId,
     };

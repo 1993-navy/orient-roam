@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { moderateActionSchema } from "@/lib/validations";
 import { recalcPlaceAggregates } from "@/lib/recommendation";
+import { recalcDishAggregates } from "@/lib/dishes";
 
 // Admin-only moderation actions. Each action resolves an optional report,
 // applies the effect, and writes an audit-log row in one transaction.
@@ -33,6 +34,13 @@ export async function POST(req: Request) {
           select: { placeId: true },
         });
         await recalcPlaceAggregates(review.placeId, tx);
+      } else if (targetType === "DISH_REVIEW") {
+        const dishReview = await tx.dishReview.update({
+          where: { id: targetId },
+          data: { hidden: true },
+          select: { dishId: true },
+        });
+        await recalcDishAggregates(dishReview.dishId, tx);
       } else if (targetType === "POST") {
         await tx.post.update({ where: { id: targetId }, data: { hidden: true } });
       } else if (targetType === "MEETUP") {

@@ -28,8 +28,15 @@ export default async function PlacePage({
           { avgRating: "desc" },
           { reviewCount: "desc" },
         ],
-        // Only the current user's own review per dish (none when signed out).
-        include: { reviews: { where: { userId: userId ?? "__none__" }, take: 1 } },
+        // All visible dish reviews (hidden ones excluded); the current user's own
+        // review is derived from this list for the edit form.
+        include: {
+          reviews: {
+            where: { hidden: false },
+            orderBy: { createdAt: "desc" },
+            include: { user: { select: { id: true, name: true } } },
+          },
+        },
       },
       foreignerTags: { select: { tag: true, userId: true } },
     },
@@ -78,7 +85,7 @@ export default async function PlacePage({
       myReview={myReview ? { rating: myReview.rating, comment: myReview.comment } : null}
       foreignerTags={foreignerTags}
       dishes={place.dishes.map((d) => {
-        const mine = d.reviews[0];
+        const mine = userId ? d.reviews.find((r) => r.userId === userId) : undefined;
         return {
           id: d.id,
           name: d.name,
@@ -91,6 +98,16 @@ export default async function PlacePage({
           myReview: mine
             ? { rating: mine.rating, comment: mine.comment, mustTry: mine.mustTry }
             : null,
+          // Other people's visible reviews that carry a written comment.
+          reviews: d.reviews
+            .filter((r) => r.comment && r.comment.trim().length > 0)
+            .map((r) => ({
+              id: r.id,
+              rating: r.rating,
+              comment: r.comment,
+              mustTry: r.mustTry,
+              userName: r.user.name,
+            })),
         };
       })}
     />
