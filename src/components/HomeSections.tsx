@@ -4,12 +4,6 @@ import Link from "next/link";
 import { useLang } from "@/components/LanguageProvider";
 import { CityCard, type CityCardData } from "@/components/CityCard";
 import { PlaceCard, type PlaceCardData } from "@/components/PlaceCard";
-import { MeetupCard } from "@/components/MeetupCard";
-import { PoolCard, type PoolCardData } from "@/components/PoolCard";
-
-// Meetup card shape (mirrors MeetupCard's prop) — kept loose to avoid a hard
-// import-type dependency on the page mapping.
-type HomeMeetup = Parameters<typeof MeetupCard>[0]["meetup"];
 
 const HUB = [
   { href: "/explore", emoji: "🍜", key: "eats" },
@@ -22,14 +16,10 @@ export function HomeSections({
   cities,
   topPlaces,
   trendingPlaces,
-  meetups = [],
-  pools = [],
 }: {
   cities: CityCardData[];
   topPlaces: PlaceCardData[];
   trendingPlaces?: PlaceCardData[];
-  meetups?: HomeMeetup[];
-  pools?: PoolCardData[];
 }) {
   const { t } = useLang();
 
@@ -57,40 +47,6 @@ export function HomeSections({
           ))}
         </div>
       </section>
-
-      {/* Meal meetups */}
-      {meetups.length > 0 && (
-        <section className="mt-10">
-          <div className="flex items-end justify-between">
-            <h2 className="text-2xl font-bold">🍽️ {t.findMeetups}</h2>
-            <Link href="/meetups" className="text-sm font-semibold text-rose-600 hover:underline">
-              {t.viewDetails} →
-            </Link>
-          </div>
-          <div className="mt-4 space-y-4">
-            {meetups.map((m) => (
-              <MeetupCard key={m.id} meetup={m} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Group pools */}
-      {pools.length > 0 && (
-        <section className="mt-10">
-          <div className="flex items-end justify-between">
-            <h2 className="text-2xl font-bold">🧧 {t.groupPools}</h2>
-            <Link href="/pools" className="text-sm font-semibold text-rose-600 hover:underline">
-              {t.viewDetails} →
-            </Link>
-          </div>
-          <div className="mt-4 space-y-4">
-            {pools.map((p) => (
-              <PoolCard key={p.id} pool={p} />
-            ))}
-          </div>
-        </section>
-      )}
 
       <section className="mt-10">
         <h2 className="text-2xl font-bold">{t.chooseCity}</h2>
