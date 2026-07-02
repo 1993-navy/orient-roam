@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 // TEMPORARY diagnostic endpoint — reports which DB the runtime actually connects
 // to and its row counts, so we can tell whether seed wrote to a different DB than
 // the app reads. Remove after debugging.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   function maskHost(v?: string): string {
     if (!v) return "(unset)";
