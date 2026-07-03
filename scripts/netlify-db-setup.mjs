@@ -45,4 +45,24 @@ if (process.env.RUN_SEED === "1") {
   console.log("netlify-db-setup: skipping seed (set RUN_SEED=1 to seed once).");
 }
 
+// The Neon extension injects NETLIFY_DATABASE_URL only into the *build*
+// environment, not into the deployed Functions runtime — so at request time
+// Prisma has no URL and every dynamic query hits an empty/nonexistent DB
+// (that is why /api/diag shows all vars unset and counts=0). We bake the
+// resolved URL into a generated, git-ignored module that is bundled into the
+// serverless function, and prisma.ts reads it as a runtime fallback. The URL
+// only ever lives in server-side function code, never shipped to the browser.
+import { writeFileSync } from "node:fs";
+
+const generated =
+  "// AUTO-GENERATED at build time by scripts/netlify-db-setup.mjs. Do not edit or commit.\n" +
+  "// Provides the runtime DB URL because the Neon extension only injects it at build time.\n" +
+  `export const DATABASE_URL = ${JSON.stringify(url)};\n`;
+try {
+  writeFileSync(new URL("../src/lib/db-url.generated.ts", import.meta.url), generated);
+  console.log("netlify-db-setup: wrote runtime DB URL fallback → src/lib/db-url.generated.ts");
+} catch (e) {
+  console.warn("netlify-db-setup: could not write runtime DB URL fallback:", e?.message ?? e);
+}
+
 console.log("netlify-db-setup: done.");
