@@ -19,36 +19,60 @@ export function BottomNav() {
     { href: "/chat", icon: "chat", label: t.chat },
   ];
 
+  // Split the tabs so the publish FAB sits in the center of the bar.
+  const left = tabs.slice(0, 2);
+  const right = tabs.slice(2);
+
+
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
+  function renderTab(tab: { href: string; icon: IconName; label: string }) {
+    const active = isActive(tab.href);
+    return (
+      <li key={tab.href} className="flex-1">
+        <Link
+          href={tab.href}
+          className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${
+            active ? "text-rose-600" : "text-neutral-500 dark:text-neutral-400"
+          }`}
+        >
+          <Icon
+            name={tab.icon}
+            className={`h-6 w-6 ${active ? "scale-110" : ""} transition`}
+            filled={active}
+            strokeWidth={active ? 2.1 : 1.8}
+          />
+          <span>{tab.label}</span>
+        </Link>
+      </li>
+    );
+  }
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-black/10 bg-white/95 backdrop-blur md:hidden dark:border-white/10 dark:bg-neutral-950/95">
       <ul className="mx-auto flex max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
-        {tabs.map((tab) => {
-          const active = isActive(tab.href);
-          return (
-            <li key={tab.href} className="flex-1">
-              <Link
-                href={tab.href}
-                className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${
-                  active ? "text-rose-600" : "text-neutral-500 dark:text-neutral-400"
-                }`}
-              >
-                <Icon
-                  name={tab.icon}
-                  className={`h-6 w-6 ${active ? "scale-110" : ""} transition`}
-                  filled={active}
-                  strokeWidth={active ? 2.1 : 1.8}
-                />
-                <span>{tab.label}</span>
-              </Link>
-            </li>
-          );
-        })}
+        {left.map(renderTab)}
+
+        {/* Center publish FAB — the main "我要发布" entry on mobile. */}
+        <li className="flex-1">
+          <Link
+            href="/publish"
+            className="flex flex-col items-center py-1.5"
+            title={t.publish}
+            aria-label={t.publish}
+          >
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-600 text-white shadow-md transition active:scale-95">
+              <Icon name="plus" className="h-6 w-6" strokeWidth={2.4} />
+            </span>
+          </Link>
+        </li>
+
+        {right.map(renderTab)}
       </ul>
     </nav>
   );
 }
+

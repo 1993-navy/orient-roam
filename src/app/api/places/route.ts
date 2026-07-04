@@ -43,7 +43,9 @@ export async function GET(req: Request) {
     });
   } else {
     const where: Prisma.PlaceWhereInput = {
+      moderationStatus: "approved",
       ...(cityId ? { cityId } : {}),
+
       ...(category && PLACE_CATEGORIES.includes(category as never)
         ? { category }
         : {}),

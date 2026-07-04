@@ -92,6 +92,53 @@ export const postSchema = z.object({
   cityId: z.string().optional().or(z.literal("")),
 });
 
+// ----------------------- Publishing (我要发布) -----------------------
+
+// Kinds of user-published content (the "发布" main button).
+export const PUBLISH_KINDS = ["FOOD", "ATTRACTION", "DIARY", "PHOTO", "VIDEO"] as const;
+export type PublishKind = (typeof PUBLISH_KINDS)[number];
+
+// User-submitted place (restaurant / attraction). Mirrors placeCreateSchema but
+// only exposes the FOOD / ATTRACTION categories a normal user can publish.
+export const publishPlaceSchema = z.object({
+  category: z.enum(["FOOD", "ATTRACTION"]),
+  name: z.string().trim().min(1, "Chinese name required").max(120),
+  nameEn: z.string().trim().min(1, "English name required").max(120),
+  cityId: z.string().min(1, "City required"),
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+  address: z.string().max(200).optional().or(z.literal("")),
+  description: z.string().max(1000).optional().or(z.literal("")),
+  priceLevel: z.coerce.number().int().min(1).max(4).default(2),
+});
+
+// A piece of media attached to a published post (external URL, MVP).
+export const publishMediaSchema = z.object({
+  url: z.string().url("Enter a valid URL").max(1000),
+  type: z.enum(["IMAGE", "VIDEO"]),
+});
+
+// User-published post: travel diary / photo / video set. `kind` decides which
+// fields matter; media holds external URLs (no upload in this iteration).
+export const publishPostSchema = z
+  .object({
+    kind: z.enum(["DIARY", "PHOTO", "VIDEO"]),
+    title: z.string().trim().max(120).optional().or(z.literal("")),
+    body: z.string().trim().max(5000).optional().or(z.literal("")),
+    cityId: z.string().optional().or(z.literal("")),
+    media: z.array(publishMediaSchema).max(9).default([]),
+  })
+  .refine((d) => (d.body && d.body.trim().length > 0) || d.media.length > 0, {
+    message: "Add some text or at least one photo/video",
+    path: ["body"],
+  })
+  // Photo / video posts must carry at least one media URL.
+  .refine((d) => d.kind === "DIARY" || d.media.length > 0, {
+    message: "Add at least one media URL",
+    path: ["media"],
+  });
+
+
 export const PLACE_CATEGORIES = [
   "FOOD",
   "ATTRACTION",
@@ -133,7 +180,10 @@ export const MOD_ACTIONS = [
   "HIDE_CONTENT",
   "SUSPEND_USER",
   "UNSUSPEND_USER",
+  "APPROVE_CONTENT", // publish a pending user submission (place / post)
+  "REJECT_CONTENT", // reject a pending user submission
 ] as const;
+
 
 export const moderateActionSchema = z.object({
   reportId: z.string().optional().or(z.literal("")),
