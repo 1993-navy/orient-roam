@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useLang } from "@/components/LanguageProvider";
-import { REPORT_REASON_LABELS } from "@/lib/i18n";
+import { biLabel, REPORT_REASON_LABELS } from "@/lib/i18n";
+
 import { REPORT_REASONS } from "@/lib/validations";
 
 // Lightweight report affordance. Opens a small reason picker, posts to
@@ -71,7 +72,8 @@ export function ReportButton({
           >
             {REPORT_REASONS.map((r) => (
               <option key={r} value={r}>
-                {REPORT_REASON_LABELS[r]?.[locale] ?? r}
+                {REPORT_REASON_LABELS[r] ? biLabel(REPORT_REASON_LABELS[r], locale) : r}
+
               </option>
             ))}
           </select>

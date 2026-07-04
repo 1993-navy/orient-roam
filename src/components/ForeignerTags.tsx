@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useLang } from "@/components/LanguageProvider";
-import { FOREIGNER_TAG_LABELS } from "@/lib/i18n";
+import { biLabel, FOREIGNER_TAG_LABELS } from "@/lib/i18n";
+
 import { FOREIGNER_TAGS } from "@/lib/validations";
 
 export type ForeignerTagState = { tag: string; count: number; mine: boolean };
@@ -80,7 +81,8 @@ export function ForeignerTags({
               }`}
             >
               <span>{label.emoji}</span>
-              <span>{label[locale]}</span>
+              <span>{biLabel(label, locale)}</span>
+
               {st.count > 0 && (
                 <span className="tabular-nums text-[10px] opacity-70">{st.count}</span>
               )}

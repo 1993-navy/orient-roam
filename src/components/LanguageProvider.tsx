@@ -6,9 +6,11 @@ import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
   UI,
+  isRtl,
   type Locale,
   type UIStrings,
 } from "@/lib/i18n";
+
 
 type LanguageContextValue = {
   locale: Locale;
@@ -32,8 +34,13 @@ export function LanguageProvider({
     (next: Locale) => {
       setLocaleState(next);
       document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000`;
+      // Update <html lang/dir> immediately so RTL locales (e.g. Arabic) flip
+      // direction without waiting for the server refresh.
+      document.documentElement.lang = next;
+      document.documentElement.dir = isRtl(next) ? "rtl" : "ltr";
       router.refresh();
     },
+
     [router],
   );
 

@@ -5,7 +5,8 @@ import { useSession, signOut } from "next-auth/react";
 import { useLang } from "@/components/LanguageProvider";
 import { useTheme } from "@/components/ThemeProvider";
 import { Icon } from "@/components/Icon";
-import type { Locale } from "@/lib/i18n";
+import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n";
+
 
 // Compact top bar for mobile only. Desktop navigation lives in <Sidebar />.
 export function Navbar() {
@@ -48,13 +49,23 @@ export function Navbar() {
           >
             <Icon name={theme === "dark" ? "sun" : "moon"} className="h-5 w-5" />
           </button>
-          <button
-            onClick={() => setLocale(locale === "en" ? "zh" : ("en" as Locale))}
-            className="rounded-full border border-black/10 px-2.5 py-1.5 text-xs font-semibold hover:bg-neutral-100 dark:border-white/15 dark:hover:bg-neutral-800"
+          <label className="sr-only" htmlFor="navbar-locale">
+            Language
+          </label>
+          <select
+            id="navbar-locale"
+            value={locale}
+            onChange={(e) => setLocale(e.target.value as Locale)}
+            className="cursor-pointer rounded-full border border-black/10 px-2 py-1.5 text-xs font-semibold hover:bg-neutral-100 dark:border-white/15 dark:bg-neutral-950 dark:hover:bg-neutral-800"
             title="Switch language"
           >
-            {locale === "en" ? "中文" : "EN"}
-          </button>
+            {LOCALES.map((lc) => (
+              <option key={lc} value={lc}>
+                {LOCALE_LABELS[lc]}
+              </option>
+            ))}
+          </select>
+
 
           {status === "authenticated" && session?.user ? (
             <button

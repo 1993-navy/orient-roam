@@ -7,7 +7,8 @@ import { useLang } from "@/components/LanguageProvider";
 import { useTheme } from "@/components/ThemeProvider";
 import { Icon, type IconName } from "@/components/Icon";
 import { Avatar } from "@/components/Avatar";
-import type { Locale } from "@/lib/i18n";
+import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n";
+
 
 type NavItem = { href: string; icon: IconName; label: string };
 
@@ -128,14 +129,26 @@ export function Sidebar() {
           </span>
         </button>
 
-        <button
-          onClick={() => setLocale(locale === "en" ? "zh" : ("en" as Locale))}
-          className="flex items-center gap-3 rounded-full px-3 py-2 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-900"
-          title="Switch language"
-        >
-          <Icon name="globe" className="h-5 w-5" />
-          <span className="hidden lg:inline">{locale === "en" ? "中文" : "English"}</span>
-        </button>
+        <div className="flex items-center gap-3 rounded-full px-3 py-2 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-900">
+          <Icon name="globe" className="h-5 w-5 shrink-0" />
+          <label className="sr-only" htmlFor="sidebar-locale">
+            Language
+          </label>
+          <select
+            id="sidebar-locale"
+            value={locale}
+            onChange={(e) => setLocale(e.target.value as Locale)}
+            className="hidden w-full cursor-pointer bg-transparent outline-none lg:inline"
+            title="Switch language"
+          >
+            {LOCALES.map((lc) => (
+              <option key={lc} value={lc}>
+                {LOCALE_LABELS[lc]}
+              </option>
+            ))}
+          </select>
+        </div>
+
 
         {status === "authenticated" && session?.user ? (
           <div className="flex items-center gap-2 rounded-full px-2 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-900">

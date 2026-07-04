@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useLang } from "@/components/LanguageProvider";
+import { biLabel } from "@/lib/i18n";
+
 
 type CityCultureData = {
   history: string | null;
@@ -65,7 +67,8 @@ export function CityCultureView({ data }: { data: CityCultureData }) {
               }`}
             >
               <span>{config.emoji}</span>
-              <span>{config[locale]}</span>
+              <span>{biLabel(config, locale)}</span>
+
             </button>
           );
         })}

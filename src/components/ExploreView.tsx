@@ -11,11 +11,13 @@ import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { FeedFooter } from "@/components/FeedFooter";
 import { pillClass } from "@/lib/ui";
 import {
+  biLabel,
   categoryLabel,
   localizedName,
   CATEGORY_LABELS,
   FOREIGNER_TAG_LABELS,
 } from "@/lib/i18n";
+
 import { PLACE_CATEGORIES, FOREIGNER_TAGS } from "@/lib/validations";
 
 type ExplorePlace = PlaceCardData & { lng: number; lat: number };
@@ -157,7 +159,8 @@ export function ExploreView({
                 active={ftags.includes(tag)}
                 onClick={() => toggleFtag(tag)}
               >
-                {label.emoji} {label[locale]}
+                {label.emoji} {biLabel(label, locale)}
+
               </FilterPill>
             );
           })}

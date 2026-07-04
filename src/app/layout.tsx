@@ -13,8 +13,10 @@ import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
   LOCALES,
+  isRtl,
   type Locale,
 } from "@/lib/i18n";
+
 
 export const metadata: Metadata = {
   title: "东方漫游 · Orient Roam — Wander China with confidence",
@@ -54,8 +56,10 @@ export default async function RootLayout({
   return (
     <html
       lang={initialLocale}
+      dir={isRtl(initialLocale) ? "rtl" : "ltr"}
       className={`h-full antialiased ${initialTheme === "dark" ? "dark" : ""}`}
     >
+
       <body className="min-h-full bg-white text-neutral-900 dark:bg-black dark:text-neutral-100">
         <Providers initialLocale={initialLocale} initialTheme={initialTheme}>
           <div className="mx-auto flex min-h-screen max-w-7xl">

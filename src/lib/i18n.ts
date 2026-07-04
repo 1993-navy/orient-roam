@@ -2,10 +2,29 @@
 // Place/city records carry both `name` (zh) and `nameEn`, so switching locale
 // also switches which name is shown. UI strings live in the dictionary below.
 
-export const LOCALES = ["en", "zh"] as const;
+export const LOCALES = ["en", "zh", "fr", "es", "ja", "ar", "pt"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_COOKIE = "locale";
+
+// Native language names shown in the language switcher.
+export const LOCALE_LABELS: Record<Locale, string> = {
+  en: "English",
+  zh: "中文",
+  fr: "Français",
+  es: "Español",
+  ja: "日本語",
+  ar: "العربية",
+  pt: "Português",
+};
+
+// Right-to-left locales (used to set <html dir>).
+export const RTL_LOCALES: Locale[] = ["ar"];
+
+export function isRtl(locale: Locale): boolean {
+  return RTL_LOCALES.includes(locale);
+}
+
 
 export const CATEGORY_LABELS: Record<string, { en: string; zh: string; emoji: string }> = {
   FOOD: { en: "Food", zh: "美食", emoji: "🍜" },
@@ -192,9 +211,13 @@ export type UIStrings = {
 };
 
 
-export const UI: Record<Locale, UIStrings> = {
+// Full English + Chinese dictionaries. The five additional locales below supply
+// partial translations for the most visible strings; anything they omit falls
+// back to English via the merge in `UI`.
+const BASE: Record<"en" | "zh", UIStrings> = {
   en: {
     tagline: "Wander China with confidence",
+
     subtitle:
       "Where to eat, what to see, where to sleep — picked by travelers, ranked by real reviews, pinned on the map.",
     explore: "Explore",
@@ -469,17 +492,262 @@ export const UI: Record<Locale, UIStrings> = {
 };
 
 
+// Partial translations for the additional locales. Any key omitted here falls
+// back to English via the merge below. Focused on high-visibility navigation,
+// the publish flow, and common actions.
+const OVERRIDES: Record<Exclude<Locale, "en" | "zh">, Partial<UIStrings>> = {
+  fr: {
+    tagline: "Explorez la Chine en toute confiance",
+    explore: "Explorer",
+    cities: "Villes",
+    chat: "Discuter",
+    community: "Communauté",
+    signIn: "Se connecter",
+    signUp: "S'inscrire",
+    signOut: "Se déconnecter",
+    chooseCity: "Choisir une ville",
+    topPicks: "Coups de cœur",
+    allCategories: "Tout",
+    search: "Rechercher",
+    home: "Accueil",
+    profile: "Profil",
+    more: "Plus",
+    save: "Enregistrer",
+    submit: "Envoyer",
+    trips: "Voyages",
+    feed: "Actualité",
+    meetupsNav: "Rencontres",
+    findMeetups: "Trouver des rencontres",
+    groupPools: "Achats groupés",
+    publish: "Publier",
+    publishTitle: "Publier du contenu",
+    publishSubtitle: "Partagez un restaurant, un site touristique, ou un carnet de voyage, une photo ou une vidéo.",
+    publishFood: "Restaurant",
+    publishAttraction: "Site touristique",
+    publishDiary: "Carnet de voyage",
+    publishPhoto: "Photos",
+    publishVideo: "Vidéo",
+    publishChooseType: "Que voulez-vous publier ?",
+    publishSubmit: "Soumettre pour révision",
+    publishPending: "Envoyé ! Il apparaîtra après approbation.",
+    publishReviewNotice: "Pour la sécurité de la communauté, les publications sont examinées avant leur mise en ligne.",
+    publishTitleField: "Titre",
+    publishBodyField: "Racontez votre histoire…",
+    publishMediaUrls: "URL d'image / vidéo",
+    publishAddMedia: "Ajouter une autre URL",
+    publishLoginRequired: "Connectez-vous pour publier",
+    approve: "Approuver",
+    reject: "Rejeter",
+  },
+  es: {
+    tagline: "Recorre China con confianza",
+    explore: "Explorar",
+    cities: "Ciudades",
+    chat: "Chat",
+    community: "Comunidad",
+    signIn: "Iniciar sesión",
+    signUp: "Registrarse",
+    signOut: "Cerrar sesión",
+    chooseCity: "Elige una ciudad",
+    topPicks: "Destacados",
+    allCategories: "Todo",
+    search: "Buscar",
+    home: "Inicio",
+    profile: "Perfil",
+    more: "Más",
+    save: "Guardar",
+    submit: "Enviar",
+    trips: "Viajes",
+    feed: "Novedades",
+    meetupsNav: "Quedadas",
+    findMeetups: "Buscar quedadas",
+    groupPools: "Compras en grupo",
+    publish: "Publicar",
+    publishTitle: "Publicar algo",
+    publishSubtitle: "Comparte un restaurante, un lugar de interés, o un diario de viaje, foto o vídeo.",
+    publishFood: "Restaurante",
+    publishAttraction: "Lugar de interés",
+    publishDiary: "Diario de viaje",
+    publishPhoto: "Fotos",
+    publishVideo: "Vídeo",
+    publishChooseType: "¿Qué quieres publicar?",
+    publishSubmit: "Enviar para revisión",
+    publishPending: "¡Enviado! Aparecerá una vez aprobado.",
+    publishReviewNotice: "Para mantener la comunidad segura, las publicaciones se revisan antes de publicarse.",
+    publishTitleField: "Título",
+    publishBodyField: "Cuenta tu historia…",
+    publishMediaUrls: "URL de imagen / vídeo",
+    publishAddMedia: "Añadir otra URL",
+    publishLoginRequired: "Inicia sesión para publicar",
+    approve: "Aprobar",
+    reject: "Rechazar",
+  },
+  ja: {
+    tagline: "安心して中国を旅しよう",
+    explore: "さがす",
+    cities: "都市",
+    chat: "チャット",
+    community: "コミュニティ",
+    signIn: "ログイン",
+    signUp: "登録",
+    signOut: "ログアウト",
+    chooseCity: "都市を選ぶ",
+    topPicks: "おすすめ",
+    allCategories: "すべて",
+    search: "検索",
+    home: "ホーム",
+    profile: "プロフィール",
+    more: "もっと見る",
+    save: "保存",
+    submit: "送信",
+    trips: "旅程",
+    feed: "フィード",
+    meetupsNav: "ミートアップ",
+    findMeetups: "ミートアップを探す",
+    groupPools: "共同購入",
+    publish: "投稿",
+    publishTitle: "投稿する",
+    publishSubtitle: "レストラン、観光スポット、旅行日記・写真・動画をシェアしよう。",
+    publishFood: "レストラン",
+    publishAttraction: "観光スポット",
+    publishDiary: "旅行日記",
+    publishPhoto: "写真",
+    publishVideo: "動画",
+    publishChooseType: "何を投稿しますか？",
+    publishSubmit: "審査に送信",
+    publishPending: "送信しました！承認後に表示されます。",
+    publishReviewNotice: "コミュニティの安全のため、投稿は公開前に審査されます。",
+    publishTitleField: "タイトル",
+    publishBodyField: "あなたのストーリーを…",
+    publishMediaUrls: "画像・動画のURL",
+    publishAddMedia: "URLを追加",
+    publishLoginRequired: "投稿するにはログインしてください",
+    approve: "承認",
+    reject: "却下",
+  },
+  ar: {
+    tagline: "تجوّل في الصين بثقة",
+    explore: "استكشف",
+    cities: "المدن",
+    chat: "الدردشة",
+    community: "المجتمع",
+    signIn: "تسجيل الدخول",
+    signUp: "إنشاء حساب",
+    signOut: "تسجيل الخروج",
+    chooseCity: "اختر مدينة",
+    topPicks: "الأفضل",
+    allCategories: "الكل",
+    search: "بحث",
+    home: "الرئيسية",
+    profile: "الملف الشخصي",
+    more: "المزيد",
+    save: "حفظ",
+    submit: "إرسال",
+    trips: "الرحلات",
+    feed: "المستجدات",
+    meetupsNav: "اللقاءات",
+    findMeetups: "ابحث عن لقاءات",
+    groupPools: "الشراء الجماعي",
+    publish: "نشر",
+    publishTitle: "انشر شيئًا",
+    publishSubtitle: "شارك مطعمًا أو معلمًا سياحيًا أو مذكرات سفر أو صورة أو فيديو.",
+    publishFood: "مطعم",
+    publishAttraction: "معلم سياحي",
+    publishDiary: "مذكرات السفر",
+    publishPhoto: "صور",
+    publishVideo: "فيديو",
+    publishChooseType: "ماذا تريد أن تنشر؟",
+    publishSubmit: "إرسال للمراجعة",
+    publishPending: "تم الإرسال! سيظهر بعد الموافقة.",
+    publishReviewNotice: "للحفاظ على أمان المجتمع، تتم مراجعة المنشورات قبل نشرها.",
+    publishTitleField: "العنوان",
+    publishBodyField: "احكِ قصتك…",
+    publishMediaUrls: "روابط الصور / الفيديو",
+    publishAddMedia: "إضافة رابط آخر",
+    publishLoginRequired: "سجّل الدخول للنشر",
+    approve: "موافقة",
+    reject: "رفض",
+  },
+  pt: {
+    tagline: "Explore a China com confiança",
+    explore: "Explorar",
+    cities: "Cidades",
+    chat: "Conversar",
+    community: "Comunidade",
+    signIn: "Entrar",
+    signUp: "Cadastrar-se",
+    signOut: "Sair",
+    chooseCity: "Escolha uma cidade",
+    topPicks: "Destaques",
+    allCategories: "Tudo",
+    search: "Pesquisar",
+    home: "Início",
+    profile: "Perfil",
+    more: "Mais",
+    save: "Salvar",
+    submit: "Enviar",
+    trips: "Viagens",
+    feed: "Novidades",
+    meetupsNav: "Encontros",
+    findMeetups: "Encontrar encontros",
+    groupPools: "Compras em grupo",
+    publish: "Publicar",
+    publishTitle: "Publicar algo",
+    publishSubtitle: "Compartilhe um restaurante, um ponto turístico, ou um diário de viagem, foto ou vídeo.",
+    publishFood: "Restaurante",
+    publishAttraction: "Ponto turístico",
+    publishDiary: "Diário de viagem",
+    publishPhoto: "Fotos",
+    publishVideo: "Vídeo",
+    publishChooseType: "O que você quer publicar?",
+    publishSubmit: "Enviar para revisão",
+    publishPending: "Enviado! Aparecerá após a aprovação.",
+    publishReviewNotice: "Para manter a comunidade segura, as publicações são revisadas antes de irem ao ar.",
+    publishTitleField: "Título",
+    publishBodyField: "Conte sua história…",
+    publishMediaUrls: "URLs de imagem / vídeo",
+    publishAddMedia: "Adicionar outra URL",
+    publishLoginRequired: "Entre para publicar",
+    approve: "Aprovar",
+    reject: "Rejeitar",
+  },
+};
+
+// Merge each additional locale over the English base so any untranslated key
+// gracefully falls back to English.
+export const UI: Record<Locale, UIStrings> = {
+  en: BASE.en,
+  zh: BASE.zh,
+  fr: { ...BASE.en, ...OVERRIDES.fr },
+  es: { ...BASE.en, ...OVERRIDES.es },
+  ja: { ...BASE.en, ...OVERRIDES.ja },
+  ar: { ...BASE.en, ...OVERRIDES.ar },
+  pt: { ...BASE.en, ...OVERRIDES.pt },
+};
+
+
+// Resolve a bilingual label object (only carries en + zh) for any locale,
+// falling back to English for the non-en/zh locales.
+export function biLabel(obj: { en: string; zh: string }, locale: Locale): string {
+  return locale === "zh" ? obj.zh : obj.en;
+}
+
 export function categoryLabel(category: string, locale: Locale): string {
+
   const c = CATEGORY_LABELS[category];
-  return c ? c[locale] : category;
+  if (!c) return category;
+  // Only English + Chinese have localized category labels; others use English.
+  return locale === "zh" ? c.zh : c.en;
 }
 
 export function localizedName(
   item: { name: string; nameEn: string },
   locale: Locale,
 ): string {
+  // Place/city records only carry zh + English names; non-zh locales show English.
   return locale === "zh" ? item.name : item.nameEn;
 }
+
 
 export function priceLevelLabel(level: number): string {
   return "¥".repeat(Math.max(1, Math.min(4, level)));

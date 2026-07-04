@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useLang } from "@/components/LanguageProvider";
-import { MEETUP_TYPE_LABELS, FOREIGNER_TAG_LABELS } from "@/lib/i18n";
+import { biLabel, MEETUP_TYPE_LABELS, FOREIGNER_TAG_LABELS } from "@/lib/i18n";
+
 import { Avatar } from "@/components/Avatar";
 
 type Meetup = {
@@ -120,11 +121,12 @@ export function MeetupCard({ meetup }: { meetup: Meetup }) {
                 return (
                   <span
                     key={tag}
-                    title={label[locale]}
+                    title={biLabel(label, locale)}
                     className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
                   >
                     <span aria-hidden="true">{label.emoji}</span>
-                    <span>{label[locale]}</span>
+                    <span>{biLabel(label, locale)}</span>
+
                   </span>
                 );
               })}
