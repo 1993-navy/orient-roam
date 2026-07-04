@@ -19,7 +19,11 @@ export async function GET(req: Request) {
       take: PER,
     }),
     prisma.place.findMany({
-      where: { OR: [{ name: like }, { nameEn: like }] },
+      where: {
+        moderationStatus: "approved",
+        OR: [{ name: like }, { nameEn: like }],
+      },
+
       select: {
         id: true,
         name: true,
@@ -31,12 +35,13 @@ export async function GET(req: Request) {
       take: PER,
     }),
     prisma.post.findMany({
-      where: { body: like },
+      where: { body: like, hidden: false, moderationStatus: "approved" },
       select: {
         id: true,
         body: true,
         author: { select: { name: true } },
       },
+
       orderBy: { createdAt: "desc" },
       take: PER,
     }),

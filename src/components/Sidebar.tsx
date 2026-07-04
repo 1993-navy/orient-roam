@@ -93,15 +93,26 @@ export function Sidebar() {
         {secondary.map((it) => renderItem(it, false))}
       </nav>
 
+      {/* Primary call-to-action: publish (我要发布). */}
+      <Link
+        href="/publish"
+        className="mt-3 flex items-center justify-center gap-2 rounded-full bg-rose-600 px-3 py-3 font-semibold text-white shadow-sm transition hover:bg-rose-700"
+        title={t.publish}
+      >
+        <Icon name="plus" className="h-5 w-5" strokeWidth={2.4} />
+        <span className="hidden lg:inline">{t.publish}</span>
+      </Link>
+
       {status !== "authenticated" && (
         <Link
           href="/auth/signup"
-          className="mt-2 flex items-center justify-center rounded-full bg-rose-600 px-3 py-3 font-semibold text-white transition hover:bg-rose-700"
+          className="mt-2 flex items-center justify-center rounded-full border border-rose-200 px-3 py-2.5 font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-900 dark:hover:bg-rose-950/40"
         >
           <span className="lg:hidden">＋</span>
           <span className="hidden lg:inline">{t.signUp}</span>
         </Link>
       )}
+
 
       <div className="mt-auto flex flex-col gap-1">
         <button

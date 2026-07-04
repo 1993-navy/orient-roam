@@ -26,7 +26,9 @@ export async function GET(req: Request) {
 
   const where: Prisma.PostWhereInput = {
     hidden: false,
+    moderationStatus: "approved",
     ...(cityId ? { cityId } : {}),
+
     ...(tag ? { tags: { some: { tag: { name: tag } } } } : {}),
   };
 

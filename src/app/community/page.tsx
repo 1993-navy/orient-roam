@@ -33,8 +33,9 @@ export default async function CommunityPage() {
     }),
     prisma.city.findMany({ orderBy: { nameEn: "asc" }, select: { id: true, nameEn: true } }),
     prisma.post.findMany({
-      where: { hidden: false },
+      where: { hidden: false, moderationStatus: "approved" },
       orderBy: { createdAt: "desc" },
+
       include: {
         author: { select: { id: true, name: true } },
         city: { select: { nameEn: true } },

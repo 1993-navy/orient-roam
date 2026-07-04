@@ -52,7 +52,34 @@ export async function POST(req: Request) {
       await tx.user.update({ where: { id: targetId }, data: { status: "suspended" } });
     } else if (action === "UNSUSPEND_USER") {
       await tx.user.update({ where: { id: targetId }, data: { status: "active" } });
+    } else if (action === "APPROVE_CONTENT") {
+      // Publish a pending user submission.
+      if (targetType === "PLACE") {
+        await tx.place.update({
+          where: { id: targetId },
+          data: { moderationStatus: "approved" },
+        });
+      } else if (targetType === "POST") {
+        await tx.post.update({
+          where: { id: targetId },
+          data: { moderationStatus: "approved" },
+        });
+      }
+    } else if (action === "REJECT_CONTENT") {
+      // Reject a pending user submission (kept in the DB for audit, hidden).
+      if (targetType === "PLACE") {
+        await tx.place.update({
+          where: { id: targetId },
+          data: { moderationStatus: "rejected" },
+        });
+      } else if (targetType === "POST") {
+        await tx.post.update({
+          where: { id: targetId },
+          data: { moderationStatus: "rejected", hidden: true },
+        });
+      }
     }
+
 
     // Resolve the originating report (dismiss vs. acted-upon).
     if (reportId) {

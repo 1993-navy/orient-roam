@@ -3,10 +3,81 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { ModerationQueue, type QueueItem } from "@/components/ModerationQueue";
+import { PendingQueue, type PendingItem } from "@/components/PendingQueue";
+
+const POST_KIND_LABELS: Record<string, string> = {
+  DIARY: "Travel diary",
+  PHOTO: "Photos",
+  VIDEO: "Video",
+  NOTE: "Post",
+};
+
+const PLACE_KIND_LABELS: Record<string, string> = {
+  FOOD: "Restaurant",
+  ATTRACTION: "Attraction",
+};
 
 export default async function AdminPage() {
   const session = await requireAdmin();
   if (!session) redirect("/");
+
+  // User submissions awaiting review (restaurants/attractions + diaries/media).
+  const [pendingPlaces, pendingPosts] = await Promise.all([
+    prisma.place.findMany({
+      where: { moderationStatus: "pending" },
+      orderBy: { createdAt: "desc" },
+      include: { city: { select: { nameEn: true } } },
+      take: 100,
+    }),
+    prisma.post.findMany({
+      where: { moderationStatus: "pending" },
+      orderBy: { createdAt: "desc" },
+      include: {
+        author: { select: { name: true } },
+        city: { select: { nameEn: true } },
+        media: { orderBy: { position: "asc" }, select: { url: true } },
+      },
+      take: 100,
+    }),
+  ]);
+
+  // Resolve submitter names for pending places in one query.
+  const submitterIds = pendingPlaces
+    .map((p) => p.submittedById)
+    .filter((id): id is string => Boolean(id));
+  const submitters = submitterIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: submitterIds } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const submitterMap = new Map(submitters.map((u) => [u.id, u.name]));
+
+  const pendingItems: PendingItem[] = [
+    ...pendingPlaces.map((p) => ({
+      id: p.id,
+      targetType: "PLACE" as const,
+      kindLabel: PLACE_KIND_LABELS[p.category] ?? "Place",
+      title: `${p.nameEn} (${p.name})`,
+      body: p.description,
+      authorName: (p.submittedById && submitterMap.get(p.submittedById)) || "Unknown",
+      cityName: p.city?.nameEn ?? null,
+      createdAt: p.createdAt.toISOString(),
+      mediaUrls: [],
+    })),
+    ...pendingPosts.map((p) => ({
+      id: p.id,
+      targetType: "POST" as const,
+      kindLabel: POST_KIND_LABELS[p.kind] ?? "Post",
+      title: p.title ?? "(untitled)",
+      body: p.body || null,
+      authorName: p.author.name,
+      cityName: p.city?.nameEn ?? null,
+      createdAt: p.createdAt.toISOString(),
+      mediaUrls: p.media.map((m) => m.url),
+    })),
+  ].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+
 
   const [reports, actions] = await Promise.all([
     prisma.report.findMany({
@@ -134,12 +205,25 @@ export default async function AdminPage() {
         </Link>
       </div>
       <p className="mt-1 text-sm text-neutral-500">
-        {items.length} open report{items.length === 1 ? "" : "s"}
+        {items.length} open report{items.length === 1 ? "" : "s"} · {pendingItems.length} pending submission
+        {pendingItems.length === 1 ? "" : "s"}
       </p>
 
-      <section className="mt-6">
-        <ModerationQueue items={items} />
+      <section className="mt-8">
+        <h2 className="text-lg font-bold">📥 Pending submissions</h2>
+        <p className="mb-3 mt-1 text-sm text-neutral-500">
+          User-submitted restaurants, attractions, diaries, photos and videos awaiting review.
+        </p>
+        <PendingQueue items={pendingItems} />
       </section>
+
+      <section className="mt-10">
+        <h2 className="text-lg font-bold">🚩 Reports</h2>
+        <div className="mt-3">
+          <ModerationQueue items={items} />
+        </div>
+      </section>
+
 
       <section className="mt-10">
         <h2 className="text-lg font-bold">Recent actions</h2>

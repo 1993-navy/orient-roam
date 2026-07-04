@@ -110,6 +110,12 @@ model Place {
   coverImage  String?
   priceLevel  Int     @default(2) // 1..4 ($ .. $$$$)
 
+  // Publishing / moderation: seed & admin-created places default to "approved";
+  // user-submitted places start "pending" and only appear publicly once approved.
+  // status: pending | approved | rejected
+  moderationStatus String  @default("approved")
+  submittedById    String? // the user who submitted it (null for admin/seed)
+
   // Cached recommendation aggregates (recomputed on each review write).
   avgRating   Float   @default(0)
   reviewCount Int     @default(0)
@@ -117,6 +123,7 @@ model Place {
   saveCount   Int     @default(0) // cached count of "save" (收藏) favorites; recomputed on each toggle
 
   createdAt DateTime @default(now())
+
 
   reviews            Review[]
   favorites          Favorite[]
@@ -296,20 +303,43 @@ model Post {
   id        String     @id @default(cuid())
   authorId  String
   author    User       @relation("UserPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  // kind: NOTE (a quick update) | DIARY (旅游日记) | PHOTO (图片) | VIDEO (视频)
+  kind      String     @default("NOTE")
+  title     String?    // optional headline (used by diaries / media posts)
   body      String
   cityId    String?
   city      City?      @relation(fields: [cityId], references: [id])
   likeCount Int        @default(0) // cached; recomputed on each like toggle
   hidden    Boolean    @default(false) // hidden by moderation
+  // Publishing / moderation: quick community posts default "approved"; richer
+  // submissions (diary / photo / video) go through review, starting "pending".
+  // status: pending | approved | rejected
+  moderationStatus String @default("approved")
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
   likes PostLike[]
   tags  PostTag[]
+  media PostMedia[]
 
   @@index([createdAt])
   @@index([cityId, createdAt])
+  @@index([moderationStatus, createdAt])
 }
+
+// Media attached to a Post (MVP: external URLs, no upload/storage). type is
+// IMAGE | VIDEO; `position` orders them within the post.
+model PostMedia {
+  id       String @id @default(cuid())
+  postId   String
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  url      String
+  type     String // IMAGE | VIDEO
+  position Int    @default(0)
+
+  @@index([postId])
+}
+
 
 model PostLike {
   postId String

@@ -168,7 +168,29 @@ export type UIStrings = {
   reportPool: string;
   meetupsNav: string;
   groupChat: string;
+  // Publishing (我要发布)
+  publish: string;
+  publishTitle: string;
+  publishSubtitle: string;
+  publishFood: string;
+  publishAttraction: string;
+  publishDiary: string;
+  publishPhoto: string;
+  publishVideo: string;
+  publishChooseType: string;
+  publishSubmit: string;
+  publishPending: string;
+  publishReviewNotice: string;
+  publishTitleField: string;
+  publishBodyField: string;
+  publishMediaUrls: string;
+  publishAddMedia: string;
+  publishLoginRequired: string;
+  moderationPending: string;
+  approve: string;
+  reject: string;
 };
+
 
 export const UI: Record<Locale, UIStrings> = {
   en: {
@@ -286,8 +308,29 @@ export const UI: Record<Locale, UIStrings> = {
     reportPool: "Report pool",
     meetupsNav: "Meetups",
     groupChat: "Group chat",
+    publish: "Publish",
+    publishTitle: "Publish something",
+    publishSubtitle: "Share a restaurant, an attraction, or a travel diary, photo or video.",
+    publishFood: "Restaurant",
+    publishAttraction: "Attraction",
+    publishDiary: "Travel diary",
+    publishPhoto: "Photos",
+    publishVideo: "Video",
+    publishChooseType: "What do you want to publish?",
+    publishSubmit: "Submit for review",
+    publishPending: "Submitted! It will appear once approved.",
+    publishReviewNotice: "To keep the community safe, submissions are reviewed before they go live.",
+    publishTitleField: "Title",
+    publishBodyField: "Tell your story…",
+    publishMediaUrls: "Image / video URLs",
+    publishAddMedia: "Add another URL",
+    publishLoginRequired: "Sign in to publish",
+    moderationPending: "Pending submissions",
+    approve: "Approve",
+    reject: "Reject",
   },
   zh: {
+
     tagline: "安心畅游中国",
     subtitle:
       "吃什么、看什么、住哪里——由旅行者甄选，按真实评价排序，清晰标注在地图上。",
@@ -402,8 +445,29 @@ export const UI: Record<Locale, UIStrings> = {
     reportPool: "举报拼团",
     meetupsNav: "约饭",
     groupChat: "群聊",
+    publish: "发布",
+    publishTitle: "我要发布",
+    publishSubtitle: "分享一家餐厅、一个景点，或你的旅游日记、图片、视频。",
+    publishFood: "餐厅",
+    publishAttraction: "景点",
+    publishDiary: "旅游日记",
+    publishPhoto: "图片",
+    publishVideo: "视频",
+    publishChooseType: "你想发布什么？",
+    publishSubmit: "提交审核",
+    publishPending: "已提交！审核通过后即会显示。",
+    publishReviewNotice: "为维护社区安全，内容在上线前需经过审核。",
+    publishTitleField: "标题",
+    publishBodyField: "讲讲你的故事……",
+    publishMediaUrls: "图片 / 视频链接",
+    publishAddMedia: "再添加一个链接",
+    publishLoginRequired: "登录后即可发布",
+    moderationPending: "待审核内容",
+    approve: "通过",
+    reject: "拒绝",
   },
 };
+
 
 export function categoryLabel(category: string, locale: Locale): string {
   const c = CATEGORY_LABELS[category];

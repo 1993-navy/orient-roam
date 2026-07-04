@@ -105,6 +105,8 @@ export async function getPersonalizedRecommendations(
   const { userId, cityId, category, limit = 20, excludePlaceIds = [] } = options;
 
   let where: Prisma.PlaceWhereInput = {
+    // Only publicly-visible (approved) places surface in recommendations.
+    moderationStatus: "approved",
     ...(cityId ? { cityId } : {}),
     ...(category ? { category } : {}),
     ...(excludePlaceIds.length > 0 ? { id: { notIn: excludePlaceIds } } : {}),
@@ -116,6 +118,7 @@ export async function getPersonalizedRecommendations(
   });
 
   if (!userId) {
+
     return places
       .sort((a, b) => b.weightScore - a.weightScore)
       .slice(0, limit);
@@ -195,6 +198,7 @@ export async function getTrendingPlaces(
   });
 
   let where: Prisma.PlaceWhereInput = {
+    moderationStatus: "approved",
     ...(cityId ? { cityId } : {}),
     ...(category ? { category } : {}),
   };
@@ -205,6 +209,7 @@ export async function getTrendingPlaces(
   });
 
   const maxRecentReviews = Math.max(...Object.values(reviewCounts), 1);
+
 
   return places
     .map((place) => {
