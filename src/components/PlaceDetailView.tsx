@@ -5,6 +5,9 @@ import { AmapMap } from "@/components/AmapMap";
 import { RatingStars } from "@/components/RatingStars";
 import { ReviewForm } from "@/components/ReviewForm";
 import { AddToTripButton } from "@/components/AddToTripButton";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { PlaceLikeButton } from "@/components/PlaceLikeButton";
+import { ShareMenu } from "@/components/ShareMenu";
 import { ForeignerTags, type ForeignerTagState } from "@/components/ForeignerTags";
 import { DishList } from "@/components/DishList";
 import { type DishItem } from "@/components/DishCard";
@@ -31,6 +34,9 @@ type PlaceDetail = {
   lat: number;
   cityName: string;
   cityId: string;
+  likeCount: number;
+  shareCount: number;
+  saveCount: number;
 };
 
 type ReviewItem = {
@@ -47,12 +53,16 @@ export function PlaceDetailView({
   myReview,
   foreignerTags,
   dishes,
+  liked = false,
+  saved = false,
 }: {
   place: PlaceDetail;
   reviews: ReviewItem[];
   myReview: { rating: number; comment: string | null } | null;
   foreignerTags: ForeignerTagState[];
   dishes: DishItem[];
+  liked?: boolean;
+  saved?: boolean;
 }) {
   const { locale, t } = useLang();
   const emoji = CATEGORY_LABELS[place.category]?.emoji ?? "📍";
@@ -95,7 +105,25 @@ export function PlaceDetailView({
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <PlaceLikeButton
+          placeId={place.id}
+          initialLiked={liked}
+          initialCount={place.likeCount}
+        />
+        <FavoriteButton
+          placeId={place.id}
+          kind="save"
+          initialActive={saved}
+          initialCount={place.saveCount}
+        />
+        <ShareMenu
+          kind="place"
+          targetId={place.id}
+          title={localizedName(place, locale)}
+          path={`/place/${place.id}`}
+          initialCount={place.shareCount}
+        />
         <AddToTripButton placeId={place.id} />
       </div>
 

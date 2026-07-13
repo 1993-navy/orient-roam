@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { postSchema } from "@/lib/validations";
 import { parseHashtags } from "@/lib/hashtags";
-import { getUserPostLikes } from "@/lib/posts";
+import { getUserPostLikes, getUserPostSaves } from "@/lib/posts";
+
 import { createCachedResponse } from "@/lib/cache";
 import { checkText } from "@/lib/moderation";
 
@@ -38,6 +39,7 @@ export async function GET(req: Request) {
     include: {
       author: { select: { id: true, name: true } },
       city: { select: { nameEn: true } },
+      media: { orderBy: { position: "asc" }, select: { url: true, type: true } },
     },
     skip,
     take: take + 1,
@@ -45,21 +47,32 @@ export async function GET(req: Request) {
 
   const hasMore = rows.length > take;
   const page = hasMore ? rows.slice(0, take) : rows;
-  const liked = await getUserPostLikes(page.map((p) => p.id));
+  const ids = page.map((p) => p.id);
+  const [liked, savedSet] = await Promise.all([
+    getUserPostLikes(ids),
+    getUserPostSaves(ids),
+  ]);
 
   const result = {
     posts: page.map((p) => ({
       id: p.id,
+      title: p.title,
       body: p.body,
+      media: p.media,
       createdAt: p.createdAt,
       authorId: p.author.id,
       authorName: p.author.name,
       cityName: p.city?.nameEn ?? null,
       likeCount: p.likeCount,
       liked: liked.has(p.id),
+      saveCount: p.saveCount,
+      saved: savedSet.has(p.id),
+      shareCount: p.shareCount,
+      commentCount: p.commentCount,
     })),
     hasMore,
   };
+
 
   return createCachedResponse(result, {
     maxAge: 30,

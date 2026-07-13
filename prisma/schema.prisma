@@ -46,6 +46,10 @@ model User {
   meetupParticipants MeetupParticipant[]
   posts              Post[]               @relation("UserPosts")
   postLikes          PostLike[]
+  postSaves          PostSave[]
+  postComments       PostComment[]
+  placeLikes         PlaceLike[]
+  feedbacks          Feedback[]
   trips              Trip[]               @relation("UserTrips")
   receivedRatings    UserRating[]         @relation("ReceivedRatings")
   givenRatings       UserRating[]         @relation("GivenRatings")
@@ -93,6 +97,24 @@ model City {
   posts       Post[]
   trips       Trip[]
   pools       GroupPool[]
+  media       CityMedia[]
+}
+
+// Curated, editor-picked media (photos / videos) shown at the top of a city
+// page — replacing the map as the first thing you see. MVP: external URLs (no
+// upload), mirroring PostMedia. `position` orders the gallery.
+model CityMedia {
+  id        String   @id @default(cuid())
+  cityId    String
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  url       String
+  type      String // IMAGE | VIDEO
+  caption   String? // 可选说明
+  captionEn String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([cityId, position])
 }
 
 model Place {
@@ -121,12 +143,15 @@ model Place {
   reviewCount Int     @default(0)
   weightScore Float   @default(0) // Bayesian-weighted score; sort recommendations by this
   saveCount   Int     @default(0) // cached count of "save" (收藏) favorites; recomputed on each toggle
+  likeCount   Int     @default(0) // cached count of likes; recomputed on each like toggle
+  shareCount  Int     @default(0) // cached count of shares/reposts (转发); bumped on each share
 
   createdAt DateTime @default(now())
 
 
   reviews            Review[]
   favorites          Favorite[]
+  likes              PlaceLike[]
   meetups            Meetup[]
   tripStops          TripStop[]
   userInteractions   UserPlaceInteraction[]
@@ -166,6 +191,18 @@ model Favorite {
 
   @@id([userId, placeId, kind])
   @@index([userId, kind])
+}
+
+// A user's like on a Place. Mirrors PostLike; drives Place.likeCount and the
+// "liked" state on the place page. One like per user per place.
+model PlaceLike {
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([placeId, userId])
+  @@index([userId])
 }
 
 // --------------------------- Messaging ---------------------------
@@ -310,6 +347,9 @@ model Post {
   cityId    String?
   city      City?      @relation(fields: [cityId], references: [id])
   likeCount Int        @default(0) // cached; recomputed on each like toggle
+  saveCount Int        @default(0) // cached count of collects (收藏); recomputed on each toggle
+  shareCount Int       @default(0) // cached count of shares/reposts (转发); bumped on each share
+  commentCount Int     @default(0) // cached count of comments; recomputed on each comment write
   hidden    Boolean    @default(false) // hidden by moderation
   // Publishing / moderation: quick community posts default "approved"; richer
   // submissions (diary / photo / video) go through review, starting "pending".
@@ -318,13 +358,32 @@ model Post {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  likes PostLike[]
-  tags  PostTag[]
-  media PostMedia[]
+  likes    PostLike[]
+  saves    PostSave[]
+  tags     PostTag[]
+  media    PostMedia[]
+  comments PostComment[]
 
   @@index([createdAt])
   @@index([cityId, createdAt])
   @@index([moderationStatus, createdAt])
+}
+
+// A comment on a Post (community note). Mirrors the lightweight text shape of a
+// Review's comment; drives Post.commentCount. Hidden comments are excluded from
+// lists and the count (moderation).
+model PostComment {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  hidden    Boolean  @default(false) // hidden by moderation
+  createdAt DateTime @default(now())
+
+  @@index([postId, createdAt])
+  @@index([userId])
 }
 
 // Media attached to a Post (MVP: external URLs, no upload/storage). type is
@@ -359,6 +418,40 @@ model PostTag {
 
   @@id([postId, tagId])
   @@index([tagId])
+}
+
+// A user's collect (收藏) on a post. Mirrors PostLike; drives saveCount and the
+// "collected" state on the post's card.
+model PostSave {
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId])
+}
+
+// --------------------------- Feedback / 意见反馈 --------------------------
+
+// Free-form user feedback (提意见) — bug reports, feature ideas, general notes.
+// Distinct from Report (which targets a specific entity). Admins triage these in
+// the moderation dashboard.
+model Feedback {
+  id        String   @id @default(cuid())
+  // Feedback may come from signed-out users too, so userId is optional.
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  // category: BUG | FEATURE | CONTENT | OTHER
+  category  String   @default("OTHER")
+  message   String
+  // Optional contact email for signed-out submitters who want a reply.
+  email     String?
+  // status: open | reviewed | resolved
+  status    String   @default("open")
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
 }
 
 // --------------------------- User Ratings ------------------------

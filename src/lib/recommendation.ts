@@ -4,7 +4,16 @@ import type { Place, Prisma } from "@prisma/client";
 export const GLOBAL_AVG = 3.8;
 export const PRIOR_WEIGHT = 10;
 
+// Small, saturating boost from how many people collected (收藏) a place, so
+// engagement nudges ordering without ever overriding rating quality. Uses a
+// log curve: the first collects matter most, then it flattens out.
+export function engagementBonus(saveCount: number): number {
+  if (saveCount <= 0) return 0;
+  return Math.min(Math.log10(saveCount + 1), 1.5);
+}
+
 export function computeWeightScore(
+
   avgRating: number,
   reviewCount: number,
   globalAvg: number = GLOBAL_AVG,
@@ -158,8 +167,13 @@ export async function getPersonalizedRecommendations(
     const recencyBonus = Math.min(place.reviewCount / 50, 1);
     score += recencyBonus * 0.5;
 
+    // Engagement bonus: places users collect (收藏) more get a small boost so
+    // popularity — not just rating — feeds the homepage recommendations.
+    score += engagementBonus(place.saveCount);
+
     return { ...place, _personalizedScore: score };
   });
+
 
   return scoredPlaces
     .sort((a, b) => (b._personalizedScore || 0) - (a._personalizedScore || 0))

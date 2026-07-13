@@ -208,7 +208,19 @@ export type UIStrings = {
   moderationPending: string;
   approve: string;
   reject: string;
+  // Feedback (意见反馈)
+  feedback: string;
+  feedbackTitle: string;
+  feedbackSubtitle: string;
+  feedbackCategory: string;
+  feedbackMessage: string;
+  feedbackPlaceholder: string;
+  feedbackEmail: string;
+  feedbackSubmit: string;
+  feedbackThanks: string;
+  feedbackAnother: string;
 };
+
 
 
 // Full English + Chinese dictionaries. The five additional locales below supply
@@ -351,8 +363,19 @@ const BASE: Record<"en" | "zh", UIStrings> = {
     moderationPending: "Pending submissions",
     approve: "Approve",
     reject: "Reject",
+    feedback: "Feedback",
+    feedbackTitle: "Share your feedback",
+    feedbackSubtitle: "Found a bug, have an idea, or something to tell us? We read every note.",
+    feedbackCategory: "What's this about?",
+    feedbackMessage: "Your message",
+    feedbackPlaceholder: "Tell us what's on your mind…",
+    feedbackEmail: "Email (optional, so we can reply)",
+    feedbackSubmit: "Send feedback",
+    feedbackThanks: "Thanks for the feedback!",
+    feedbackAnother: "Send another",
   },
   zh: {
+
 
     tagline: "安心畅游中国",
     subtitle:
@@ -488,8 +511,19 @@ const BASE: Record<"en" | "zh", UIStrings> = {
     moderationPending: "待审核内容",
     approve: "通过",
     reject: "拒绝",
+    feedback: "意见反馈",
+    feedbackTitle: "提交意见反馈",
+    feedbackSubtitle: "发现了问题、有好点子，或者想对我们说点什么？每一条我们都会认真看。",
+    feedbackCategory: "反馈类型",
+    feedbackMessage: "你的意见",
+    feedbackPlaceholder: "把你的想法告诉我们……",
+    feedbackEmail: "邮箱（可选，方便我们回复你）",
+    feedbackSubmit: "提交反馈",
+    feedbackThanks: "感谢你的反馈！",
+    feedbackAnother: "再提一条",
   },
 };
+
 
 
 // Partial translations for the additional locales. Any key omitted here falls
@@ -731,6 +765,42 @@ export const UI: Record<Locale, UIStrings> = {
 export function biLabel(obj: { en: string; zh: string }, locale: Locale): string {
   return locale === "zh" ? obj.zh : obj.en;
 }
+
+// Interaction / share / gallery labels. Kept as bilingual objects (resolved via
+// biLabel) so new UI strings don't require touching every locale in UIStrings.
+export const INTERACTION_LABELS = {
+  like: { en: "Like", zh: "点赞" },
+  comment: { en: "Comment", zh: "评论" },
+  comments: { en: "Comments", zh: "评论" },
+  share: { en: "Share", zh: "转发" },
+  shareTo: { en: "Share to", zh: "转发到" },
+  copyLink: { en: "Copy link", zh: "复制链接" },
+  linkCopied: { en: "Link copied", zh: "链接已复制" },
+  wechatHint: { en: "Link copied — paste it into WeChat", zh: "链接已复制，粘贴到微信即可" },
+  writeComment: { en: "Write a comment…", zh: "写下你的评论…" },
+  postComment: { en: "Post", zh: "发表" },
+  noComments: { en: "No comments yet — be the first!", zh: "还没有评论——来当第一个吧！" },
+  featured: { en: "Featured", zh: "精选" },
+  travelNotes: { en: "Travel Notes", zh: "旅行笔记" },
+} as const;
+
+// Chat auto-translation labels (resolved via biLabel).
+export const TRANSLATE_LABELS = {
+  autoTranslate: { en: "Auto-translate", zh: "自动翻译" },
+  translating: { en: "Translating…", zh: "翻译中…" },
+  translatedTag: { en: "translated", zh: "译文" },
+  showOriginal: { en: "Show original", zh: "显示原文" },
+  showTranslation: { en: "Translate", zh: "翻译" },
+} as const;
+
+// Share channels (order = display order in ShareMenu).
+export const SHARE_CHANNELS = {
+  wechat: { en: "WeChat", zh: "微信", emoji: "💬" },
+  telegram: { en: "Telegram", zh: "Telegram", emoji: "✈️" },
+  whatsapp: { en: "WhatsApp", zh: "WhatsApp", emoji: "🟢" },
+  youtube: { en: "YouTube", zh: "YouTube", emoji: "▶️" },
+  x: { en: "X", zh: "X", emoji: "𝕏" },
+} as const;
 
 export function categoryLabel(category: string, locale: Locale): string {
 

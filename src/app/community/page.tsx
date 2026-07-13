@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { CommunityView } from "@/components/CommunityView";
-import { getUserPostLikes } from "@/lib/posts";
+import { getUserPostLikes, getUserPostSaves } from "@/lib/posts";
+
 
 const FEED_PAGE = 15;
 
@@ -39,6 +40,7 @@ export default async function CommunityPage() {
       include: {
         author: { select: { id: true, name: true } },
         city: { select: { nameEn: true } },
+        media: { orderBy: { position: "asc" }, select: { url: true, type: true } },
       },
       take: FEED_PAGE + 1,
     }),
@@ -46,7 +48,12 @@ export default async function CommunityPage() {
 
   const initialHasMore = postRows.length > FEED_PAGE;
   const feedPage = initialHasMore ? postRows.slice(0, FEED_PAGE) : postRows;
-  const likedSet = await getUserPostLikes(feedPage.map((p) => p.id));
+  const feedIds = feedPage.map((p) => p.id);
+  const [likedSet, savedSet] = await Promise.all([
+    getUserPostLikes(feedIds),
+    getUserPostSaves(feedIds),
+  ]);
+
 
   return (
     <CommunityView
@@ -56,14 +63,21 @@ export default async function CommunityPage() {
       initialHasMore={initialHasMore}
       initialPosts={feedPage.map((p) => ({
         id: p.id,
+        title: p.title,
         body: p.body,
+        media: p.media,
         createdAt: p.createdAt.toISOString(),
         authorId: p.author.id,
         authorName: p.author.name,
         cityName: p.city?.nameEn ?? null,
         likeCount: p.likeCount,
         liked: likedSet.has(p.id),
+        saveCount: p.saveCount,
+        saved: savedSet.has(p.id),
+        shareCount: p.shareCount,
+        commentCount: p.commentCount,
       }))}
+
       communities={communities.map((c) => ({
         id: c.id,
         name: c.name,

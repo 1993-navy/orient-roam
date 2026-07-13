@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/components/LanguageProvider";
 import { Icon } from "@/components/Icon";
 import { Avatar } from "@/components/Avatar";
+import { TRANSLATE_LABELS, biLabel } from "@/lib/i18n";
+
+type Translation = { translated: string; detected: string };
+const AUTO_TRANSLATE_KEY = "orient-roam:auto-translate";
 
 type Convo = {
   id: string;
@@ -38,7 +42,7 @@ export function ChatView({
   otherUsers: { id: string; name: string }[];
   initialConversationId?: string | null;
 }) {
-  const { t } = useLang();
+  const { t, locale } = useLang();
   const router = useRouter();
   const [activeId, setActiveId] = useState<string | null>(
     initialConversationId && conversations.some((c) => c.id === initialConversationId)
@@ -49,6 +53,28 @@ export function ChatView({
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+
+  // Auto-translation state. Original bodies stay in `messages`; translations are
+  // kept separately keyed by message id. `shownOriginal` lets a user reveal the
+  // original for a message whose translation is showing.
+  const [autoTranslate, setAutoTranslate] = useState(false);
+  const [translations, setTranslations] = useState<Record<string, Translation>>({});
+  const [shownOriginal, setShownOriginal] = useState<Record<string, boolean>>({});
+  const requestedRef = useRef<Set<string>>(new Set());
+
+  // Restore the auto-translate preference once on mount.
+  useEffect(() => {
+    setAutoTranslate(localStorage.getItem(AUTO_TRANSLATE_KEY) === "1");
+  }, []);
+
+  const toggleAutoTranslate = useCallback(() => {
+    setAutoTranslate((prev) => {
+      const next = !prev;
+      localStorage.setItem(AUTO_TRANSLATE_KEY, next ? "1" : "0");
+      if (next) requestedRef.current.clear(); // allow re-translation into current locale
+      return next;
+    });
+  }, []);
 
   const activeConvo = conversations.find((c) => c.id === activeId) ?? null;
 
@@ -103,6 +129,44 @@ export function ChatView({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // When locale changes, drop cached translations so messages re-translate into
+  // the newly chosen language.
+  useEffect(() => {
+    requestedRef.current.clear();
+    setTranslations({});
+  }, [locale]);
+
+  // Fetch translations for other people's messages that we haven't requested yet.
+  useEffect(() => {
+    if (!autoTranslate) return;
+    const pending = messages.filter(
+      (m) => m.senderId !== me && m.body.trim() && !requestedRef.current.has(m.id),
+    );
+    if (pending.length === 0) return;
+    pending.forEach((m) => requestedRef.current.add(m.id));
+
+    (async () => {
+      try {
+        const res = await fetch("/api/messages/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: locale,
+            items: pending.map((m) => ({ id: m.id, body: m.body })),
+          }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.translations && Object.keys(data.translations).length > 0) {
+          setTranslations((prev) => ({ ...prev, ...data.translations }));
+        }
+      } catch {
+        // Network/provider failure — leave originals untranslated, allow retry.
+        pending.forEach((m) => requestedRef.current.delete(m.id));
+      }
+    })();
+  }, [messages, autoTranslate, me, locale]);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -208,11 +272,29 @@ export function ChatView({
                   <Icon name="back" className="h-5 w-5" />
                 </button>
                 <span className="truncate font-semibold">{activeConvo?.title}</span>
+                <button
+                  type="button"
+                  onClick={toggleAutoTranslate}
+                  aria-pressed={autoTranslate}
+                  title={biLabel(TRANSLATE_LABELS.autoTranslate, locale)}
+                  className={`ml-auto flex flex-none items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${
+                    autoTranslate
+                      ? "bg-rose-600 text-white"
+                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                  }`}
+                >
+                  <Icon name="globe" className="h-3.5 w-3.5" />
+                  {biLabel(TRANSLATE_LABELS.autoTranslate, locale)}
+                </button>
               </div>
 
               <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-4">
                 {messages.map((m) => {
                   const mine = m.senderId === me;
+                  const tr = translations[m.id];
+                  // Show translation as the primary text (original kept below /
+                  // revealable) only for other people's messages when we have one.
+                  const showTr = !mine && autoTranslate && tr && !shownOriginal[m.id];
                   return (
                     <div
                       key={m.id}
@@ -232,7 +314,32 @@ export function ChatView({
                               : "bg-white text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
                           }`}
                         >
-                          {m.body}
+                          {showTr ? tr.translated : m.body}
+                          {!mine && tr && (
+                            <div className="mt-1.5 border-t border-black/5 pt-1.5 dark:border-white/10">
+                              <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                                {showTr ? m.body : tr.translated}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShownOriginal((prev) => ({
+                                    ...prev,
+                                    [m.id]: !prev[m.id],
+                                  }))
+                                }
+                                className="mt-1 flex items-center gap-1 text-[11px] font-medium text-rose-600 hover:underline dark:text-rose-400"
+                              >
+                                <Icon name="globe" className="h-3 w-3" />
+                                {biLabel(
+                                  showTr
+                                    ? TRANSLATE_LABELS.showOriginal
+                                    : TRANSLATE_LABELS.showTranslation,
+                                  locale,
+                                )}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

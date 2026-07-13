@@ -171,3 +171,159 @@ export function screenContent(...texts: (string | null | undefined)[]): ScreenRe
   }
   return { ok: true };
 }
+
+// --------------------------- AI content screen -----------------------------
+//
+// screenContentAI() layers an LLM classifier on top of the keyword screen for
+// user-published content. It:
+//   1. runs the deterministic keyword screen first (cheap, catches the obvious
+//      cases and lets us short-circuit without an API round-trip);
+//   2. if that passes and an AI provider is configured, asks the model to
+//      classify the text into one of MODERATION_CATEGORIES (or "OK").
+//
+// It is designed to *fail open*: if the provider is unconfigured, disabled, or
+// errors/times out, we fall back to the keyword result so publishing never
+// breaks — everything still lands in the human review queue as "pending".
+//
+// Provider is any OpenAI-compatible Chat Completions endpoint (OpenAI,
+// DeepSeek, Moonshot, etc.), configured via env vars (see .env.example).
+
+// Whether AI screening is turned on. Requires an API key and MODERATION_AI
+// left unset or set to a truthy value ("1" / "true" / "on").
+function aiEnabled(): boolean {
+  if (!process.env.MODERATION_AI_API_KEY) return false;
+  const flag = (process.env.MODERATION_AI ?? "on").toLowerCase();
+  return flag === "1" || flag === "true" || flag === "on" || flag === "yes";
+}
+
+const AI_TIMEOUT_MS = Number(process.env.MODERATION_AI_TIMEOUT_MS) || 8000;
+
+// System prompt: instruct the model to act as a strict content classifier and
+// reply with a single JSON object. Categories mirror MODERATION_CATEGORIES.
+const AI_SYSTEM_PROMPT = `You are a strict content-moderation classifier for a travel community app (content is in Chinese and/or English).
+
+Classify the user-provided text into exactly ONE of these labels:
+- SPAM: advertising, scams, phishing, fraud, or unsolicited promotion.
+- NEGATIVE: abusive, insulting, or offensive language / harassment.
+- GORE: graphic violence, gore, or extreme cruelty.
+- POLITICAL: politically sensitive content (subversion, separatism, attacks on the state).
+- INCITEMENT: incitement to violence, riots, or unrest.
+- RUMOR: rumors, misinformation, or unverified false claims.
+- OK: none of the above; the text is safe to publish.
+
+Only flag content you are confident violates a category. Normal travel reviews,
+restaurant/attraction descriptions, and travel diaries are OK. When unsure, answer OK.
+
+Respond with ONLY a compact JSON object, no markdown, in the form:
+{"category":"OK"|"SPAM"|"NEGATIVE"|"GORE"|"POLITICAL"|"INCITEMENT"|"RUMOR","reason":"short explanation"}`;
+
+type AiVerdict = { category: ModerationCategory | "OK"; reason?: string };
+
+// Parse the model's reply into a verdict, tolerating markdown fences / extra
+// prose around the JSON. Returns null if nothing usable was found.
+function parseAiVerdict(content: string): AiVerdict | null {
+  const match = content.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+  let raw: unknown;
+  try {
+    raw = JSON.parse(match[0]);
+  } catch {
+    return null;
+  }
+  if (!raw || typeof raw !== "object") return null;
+  const category = (raw as { category?: unknown }).category;
+  if (typeof category !== "string") return null;
+  const upper = category.toUpperCase();
+  if (upper === "OK") return { category: "OK" };
+  if ((MODERATION_CATEGORIES as readonly string[]).includes(upper)) {
+    const reason = (raw as { reason?: unknown }).reason;
+    return {
+      category: upper as ModerationCategory,
+      reason: typeof reason === "string" ? reason : undefined,
+    };
+  }
+  return null;
+}
+
+// Call the configured OpenAI-compatible Chat Completions endpoint. Returns a
+// verdict, or null on any error (so the caller can fall back to fail-open).
+async function classifyWithAI(text: string): Promise<AiVerdict | null> {
+  const apiKey = process.env.MODERATION_AI_API_KEY;
+  if (!apiKey) return null;
+
+  const baseUrl = (process.env.MODERATION_AI_BASE_URL || "https://api.openai.com/v1").replace(
+    /\/+$/,
+    "",
+  );
+  const model = process.env.MODERATION_AI_MODEL || "gpt-4o-mini";
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        max_tokens: 200,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: AI_SYSTEM_PROMPT },
+          { role: "user", content: text.slice(0, 8000) },
+        ],
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      console.error(`[moderation] AI provider returned ${res.status}`);
+      return null;
+    }
+
+    const json = (await res.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    const content = json.choices?.[0]?.message?.content;
+    if (!content) return null;
+    return parseAiVerdict(content);
+  } catch (err) {
+    // Timeouts, network errors, malformed responses — fail open.
+    console.error("[moderation] AI screen failed:", err);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Async counterpart to screenContent(): keyword screen first, then AI. Falls
+// back to the keyword result (fail-open) whenever AI is off or unavailable.
+export async function screenContentAI(
+  ...texts: (string | null | undefined)[]
+): Promise<ScreenResult> {
+  // Deterministic keyword pass first — cheap and catches obvious violations.
+  const keyword = screenContent(...texts);
+  if (!keyword.ok) return keyword;
+
+  if (!aiEnabled()) return keyword;
+
+  const joined = texts.filter(Boolean).join("\n");
+  if (!joined.trim()) return keyword;
+
+  const verdict = await classifyWithAI(joined);
+  if (!verdict || verdict.category === "OK") {
+    // No usable AI verdict (fail-open) or explicitly safe.
+    return keyword;
+  }
+
+  return {
+    ok: false,
+    category: verdict.category,
+    reason: verdict.reason?.trim() || CATEGORY_REASON[verdict.category],
+  };
+}
+
+

@@ -44,6 +44,20 @@ export default async function PlacePage({
 
   if (!place) notFound();
 
+  // Whether the current user has liked / saved this place (for the interaction bar).
+  const [myLike, mySave] = userId
+    ? await Promise.all([
+        prisma.placeLike.findUnique({
+          where: { placeId_userId: { placeId: id, userId } },
+          select: { placeId: true },
+        }),
+        prisma.favorite.findUnique({
+          where: { userId_placeId_kind: { userId, placeId: id, kind: "save" } },
+          select: { placeId: true },
+        }),
+      ])
+    : [null, null];
+
   const myReview = userId
     ? place.reviews.find((r) => r.userId === userId)
     : undefined;
@@ -74,7 +88,12 @@ export default async function PlacePage({
         lat: place.lat,
         cityName: place.city.nameEn,
         cityId: place.cityId,
+        likeCount: place.likeCount,
+        shareCount: place.shareCount,
+        saveCount: place.saveCount,
       }}
+      liked={Boolean(myLike)}
+      saved={Boolean(mySave)}
       reviews={place.reviews.map((r) => ({
         id: r.id,
         rating: r.rating,

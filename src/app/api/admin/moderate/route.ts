@@ -53,7 +53,8 @@ export async function POST(req: Request) {
     } else if (action === "UNSUSPEND_USER") {
       await tx.user.update({ where: { id: targetId }, data: { status: "active" } });
     } else if (action === "APPROVE_CONTENT") {
-      // Publish a pending user submission.
+      // Publish a pending user submission. Also un-hides it, so approving
+      // something that was previously rejected fully restores it (undo).
       if (targetType === "PLACE") {
         await tx.place.update({
           where: { id: targetId },
@@ -62,10 +63,11 @@ export async function POST(req: Request) {
       } else if (targetType === "POST") {
         await tx.post.update({
           where: { id: targetId },
-          data: { moderationStatus: "approved" },
+          data: { moderationStatus: "approved", hidden: false },
         });
       }
     } else if (action === "REJECT_CONTENT") {
+
       // Reject a pending user submission (kept in the DB for audit, hidden).
       if (targetType === "PLACE") {
         await tx.place.update({

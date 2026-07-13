@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { ModerationQueue, type QueueItem } from "@/components/ModerationQueue";
 import { PendingQueue, type PendingItem } from "@/components/PendingQueue";
+import { ReviewedQueue, type ReviewedItem } from "@/components/ReviewedQueue";
+
 
 const POST_KIND_LABELS: Record<string, string> = {
   DIARY: "Travel diary",
@@ -79,7 +81,8 @@ export default async function AdminPage() {
   ].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 
 
-  const [reports, actions] = await Promise.all([
+  const [reports, actions, reviewedActions, feedbacks] = await Promise.all([
+
     prisma.report.findMany({
       where: { status: "open" },
       orderBy: { createdAt: "desc" },
@@ -91,7 +94,84 @@ export default async function AdminPage() {
       include: { moderator: { select: { name: true } } },
       take: 20,
     }),
+    // Recent APPROVE/REJECT decisions on submissions — powers the "reviewed
+    // history / undo" list so an admin can change their mind.
+    prisma.moderationAction.findMany({
+      where: {
+        action: { in: ["APPROVE_CONTENT", "REJECT_CONTENT"] },
+        targetType: { in: ["PLACE", "POST"] },
+      },
+      orderBy: { createdAt: "desc" },
+      include: { moderator: { select: { name: true } } },
+      take: 60,
+    }),
+    // Latest user feedback (意见反馈) so admins can triage bug reports & ideas.
+    prisma.feedback.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { user: { select: { name: true } } },
+      take: 50,
+    }),
   ]);
+
+
+  // Build the reviewed-history list: keep only the latest decision per target,
+  // then resolve the entity's current title/status (skip deleted ones).
+  const latestByTarget = new Map<string, (typeof reviewedActions)[number]>();
+  for (const a of reviewedActions) {
+    const key = `${a.targetType}-${a.targetId}`;
+    if (!latestByTarget.has(key)) latestByTarget.set(key, a);
+  }
+  const reviewedPlaceIds = [...latestByTarget.values()]
+    .filter((a) => a.targetType === "PLACE")
+    .map((a) => a.targetId);
+  const reviewedPostIds = [...latestByTarget.values()]
+    .filter((a) => a.targetType === "POST")
+    .map((a) => a.targetId);
+
+  const [reviewedPlaces, reviewedPosts] = await Promise.all([
+    prisma.place.findMany({
+      where: { id: { in: reviewedPlaceIds } },
+      select: { id: true, name: true, nameEn: true, category: true, moderationStatus: true },
+    }),
+    prisma.post.findMany({
+      where: { id: { in: reviewedPostIds } },
+      select: { id: true, title: true, kind: true, moderationStatus: true },
+    }),
+  ]);
+  const reviewedPlaceMap = new Map(reviewedPlaces.map((p) => [p.id, p]));
+  const reviewedPostMap = new Map(reviewedPosts.map((p) => [p.id, p]));
+
+  const reviewedItems: ReviewedItem[] = [...latestByTarget.values()]
+    .map((a): ReviewedItem | null => {
+      if (a.targetType === "PLACE") {
+        const p = reviewedPlaceMap.get(a.targetId);
+        if (!p || p.moderationStatus === "pending") return null;
+        return {
+          id: p.id,
+          targetType: "PLACE",
+          kindLabel: PLACE_KIND_LABELS[p.category] ?? "Place",
+          title: `${p.nameEn} (${p.name})`,
+          status: p.moderationStatus === "approved" ? "approved" : "rejected",
+          note: a.note,
+          moderatorName: a.moderator.name,
+          decidedAt: a.createdAt.toISOString(),
+        };
+      }
+      const p = reviewedPostMap.get(a.targetId);
+      if (!p || p.moderationStatus === "pending") return null;
+      return {
+        id: p.id,
+        targetType: "POST",
+        kindLabel: POST_KIND_LABELS[p.kind] ?? "Post",
+        title: p.title ?? "(untitled)",
+        status: p.moderationStatus === "approved" ? "approved" : "rejected",
+        note: a.note,
+        moderatorName: a.moderator.name,
+        decidedAt: a.createdAt.toISOString(),
+      };
+    })
+    .filter((x): x is ReviewedItem => x !== null);
+
 
   // Batch-resolve reported entities by type.
   const ids = (type: string) =>
@@ -226,7 +306,49 @@ export default async function AdminPage() {
 
 
       <section className="mt-10">
+        <h2 className="text-lg font-bold">🕓 Reviewed · history & undo</h2>
+        <p className="mb-3 mt-1 text-sm text-neutral-500">
+          Recently approved or rejected submissions. Changed your mind? Undo to
+          flip the decision.
+        </p>
+        <ReviewedQueue items={reviewedItems} />
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-lg font-bold">💬 User feedback</h2>
+        <p className="mb-3 mt-1 text-sm text-neutral-500">
+          Suggestions, bug reports and ideas submitted via the feedback page.
+        </p>
+        {feedbacks.length === 0 ? (
+          <p className="mt-2 text-sm text-neutral-500">No feedback yet.</p>
+        ) : (
+          <ul className="mt-3 space-y-3">
+            {feedbacks.map((f) => (
+              <li key={f.id} className="card p-4">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="rounded-full bg-rose-100 px-2 py-0.5 font-semibold text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
+                    {f.category}
+                  </span>
+                  <span className="text-neutral-500">
+                    {f.user?.name ?? f.email ?? "Anonymous"}
+                  </span>
+                  <span className="text-neutral-400">
+                    · {new Date(f.createdAt).toLocaleString()}
+                  </span>
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700 dark:text-neutral-200">
+                  {f.message}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mt-10">
         <h2 className="text-lg font-bold">Recent actions</h2>
+
+
         {actions.length === 0 ? (
           <p className="mt-2 text-sm text-neutral-500">No actions yet.</p>
         ) : (

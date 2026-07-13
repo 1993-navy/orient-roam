@@ -32,7 +32,9 @@ export function Sidebar() {
     { href: "/pools", icon: "bookmark", label: t.groupPools },
     { href: "/trips", icon: "route", label: t.trips },
     { href: "/chat", icon: "chat", label: t.chat },
+    { href: "/feedback", icon: "feedback", label: t.feedback },
   ];
+
   if (status === "authenticated" && session?.user) {
     secondary.push({ href: `/profile/${session.user.id}`, icon: "profile", label: t.profile });
     if (session.user.role === "admin") {
@@ -69,7 +71,8 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[88px] flex-col gap-1 border-r border-black/10 px-2 py-3 md:flex lg:w-64 lg:px-3 dark:border-white/10">
+    <aside className="sticky top-0 hidden h-screen w-[88px] flex-col gap-1 overflow-y-auto border-r border-black/10 px-2 py-3 md:flex lg:w-64 lg:px-3 dark:border-white/10">
+
       <Link href="/" className="mb-2 flex items-center gap-2 rounded-full px-3 py-2 text-xl font-bold">
         <span>🧭</span>
         <span className="hidden bg-gradient-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent lg:inline">

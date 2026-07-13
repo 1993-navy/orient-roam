@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { publishPlaceSchema } from "@/lib/validations";
-import { screenContent } from "@/lib/moderation";
+import { screenContentAI } from "@/lib/moderation";
+
 
 // POST /api/publish/place — a signed-in user submits a restaurant / attraction.
 // It is created with moderationStatus = "pending" and stays out of public lists
@@ -25,7 +26,8 @@ export async function POST(req: Request) {
   }
   const d = parsed.data;
 
-  const screen = screenContent(d.name, d.nameEn, d.address, d.description);
+  const screen = await screenContentAI(d.name, d.nameEn, d.address, d.description);
+
   if (!screen.ok) {
     return NextResponse.json(
       { error: screen.reason, category: screen.category },

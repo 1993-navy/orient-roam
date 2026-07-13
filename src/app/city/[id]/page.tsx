@@ -17,9 +17,13 @@ export default async function CityPage({
   const { id } = await params;
   const PAGE = 18;
 
-  const [city, placeRows] = await Promise.all([
+  const [city, media, placeRows] = await Promise.all([
     prisma.city.findUnique({
       where: { id },
+    }),
+    prisma.cityMedia.findMany({
+      where: { cityId: id },
+      orderBy: { position: "asc" },
     }),
     getHybridRecommendations({
       userId,
@@ -45,6 +49,7 @@ export default async function CityPage({
         summary: city.summary,
         lng: city.lng,
         lat: city.lat,
+        coverImage: city.coverImage,
         history: city.history,
         historyEn: city.historyEn,
         culture: city.culture,
@@ -56,6 +61,13 @@ export default async function CityPage({
         stories: city.stories,
         storiesEn: city.storiesEn,
       }}
+      media={media.map((m) => ({
+        id: m.id,
+        url: m.url,
+        type: m.type,
+        caption: m.caption,
+        captionEn: m.captionEn,
+      }))}
       initialHasMore={initialHasMore}
       initialPlaces={places.map((p) => toPlaceCardData(p, { saved, wished }))}
     />

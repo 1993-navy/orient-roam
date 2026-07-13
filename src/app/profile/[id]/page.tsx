@@ -38,6 +38,86 @@ export default async function ProfilePage({
   const isMe = session?.user?.id === user.id;
   const canMessage = Boolean(session?.user?.id) && !isMe;
 
+  // The user's own submissions and their moderation status (only shown to
+  // themselves). Rejected ones surface the moderator's feedback so the author
+  // knows what to fix and can resubmit.
+  type MySubmission = {
+    key: string;
+    kindLabel: string;
+    title: string;
+    status: string; // pending | approved | rejected
+    feedback: string | null;
+    createdAt: Date;
+  };
+  let mySubmissions: MySubmission[] = [];
+  if (isMe) {
+    const POST_KIND_LABELS: Record<string, string> = {
+      DIARY: "Travel diary",
+      PHOTO: "Photos",
+      VIDEO: "Video",
+      NOTE: "Post",
+    };
+    const PLACE_KIND_LABELS: Record<string, string> = {
+      FOOD: "Restaurant",
+      ATTRACTION: "Attraction",
+    };
+    const [myPosts, myPlaces] = await Promise.all([
+      prisma.post.findMany({
+        where: { authorId: id, moderationStatus: { in: ["pending", "rejected"] } },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, title: true, kind: true, moderationStatus: true, createdAt: true },
+        take: 50,
+      }),
+      prisma.place.findMany({
+        where: { submittedById: id, moderationStatus: { in: ["pending", "rejected"] } },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true, nameEn: true, category: true, moderationStatus: true, createdAt: true },
+        take: 50,
+      }),
+    ]);
+
+    // Pull the latest rejection note per rejected submission from the log.
+    const rejectedIds = [
+      ...myPosts.filter((p) => p.moderationStatus === "rejected").map((p) => p.id),
+      ...myPlaces.filter((p) => p.moderationStatus === "rejected").map((p) => p.id),
+    ];
+    const feedbackMap = new Map<string, string>();
+    if (rejectedIds.length > 0) {
+      const notes = await prisma.moderationAction.findMany({
+        where: {
+          action: "REJECT_CONTENT",
+          targetId: { in: rejectedIds },
+          note: { not: null },
+        },
+        orderBy: { createdAt: "desc" },
+        select: { targetId: true, note: true },
+      });
+      for (const n of notes) {
+        if (n.note && !feedbackMap.has(n.targetId)) feedbackMap.set(n.targetId, n.note);
+      }
+    }
+
+    mySubmissions = [
+      ...myPosts.map((p) => ({
+        key: `POST-${p.id}`,
+        kindLabel: POST_KIND_LABELS[p.kind] ?? "Post",
+        title: p.title ?? "(untitled)",
+        status: p.moderationStatus,
+        feedback: feedbackMap.get(p.id) ?? null,
+        createdAt: p.createdAt,
+      })),
+      ...myPlaces.map((p) => ({
+        key: `PLACE-${p.id}`,
+        kindLabel: PLACE_KIND_LABELS[p.category] ?? "Place",
+        title: `${p.nameEn} (${p.name})`,
+        status: p.moderationStatus,
+        feedback: feedbackMap.get(p.id) ?? null,
+        createdAt: p.createdAt,
+      })),
+    ].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  }
+
+
   let hasRated = false;
   if (session?.user?.id && !isMe) {
     const existingRating = await prisma.userRating.findUnique({
@@ -108,8 +188,49 @@ export default async function ProfilePage({
         </section>
       )}
 
+      {isMe && mySubmissions.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg font-bold">My submissions</h2>
+          <p className="mt-1 text-sm text-neutral-500">
+            Content you submitted that is awaiting review or was sent back.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {mySubmissions.map((s) => (
+              <li key={s.key} className="card p-3">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="rounded-full bg-sky-50 px-2 py-0.5 font-semibold text-sky-700">
+                    {s.kindLabel}
+                  </span>
+                  {s.status === "pending" ? (
+                    <span className="rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-700">
+                      Pending review
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-rose-50 px-2 py-0.5 font-semibold text-rose-600">
+                      Sent back
+                    </span>
+                  )}
+                  <span className="text-neutral-400">
+                    {s.createdAt.toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="mt-1 font-medium">{s.title}</p>
+                {s.status === "rejected" && (
+                  <p className="mt-1 rounded-lg bg-rose-50/60 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-200">
+                    {s.feedback
+                      ? `Moderator feedback: ${s.feedback}`
+                      : "This didn't pass review. Please revise it and submit again."}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="mt-8">
         <h2 className="text-lg font-bold">Recent reviews</h2>
+
         {user.reviews.length === 0 ? (
           <p className="mt-2 text-sm text-neutral-500">No reviews yet.</p>
         ) : (

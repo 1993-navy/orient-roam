@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AmapMap } from "@/components/AmapMap";
+import { CityMediaGallery, type CityMediaItem } from "@/components/CityMediaGallery";
 import { PlaceCard, type PlaceCardData } from "@/components/PlaceCard";
 import { CityCultureView } from "@/components/CityCultureView";
 import { useLang } from "@/components/LanguageProvider";
@@ -14,17 +14,19 @@ type CityPlace = PlaceCardData & { lng: number; lat: number };
 
 export function CityView({
   city,
+  media,
   initialPlaces,
   initialHasMore,
 }: {
-  city: { 
-    id: string; 
-    name: string; 
-    nameEn: string; 
-    province: string; 
-    summary: string | null; 
-    lng: number; 
+  city: {
+    id: string;
+    name: string;
+    nameEn: string;
+    province: string;
+    summary: string | null;
+    lng: number;
     lat: number;
+    coverImage: string | null;
     history: string | null;
     historyEn: string | null;
     culture: string | null;
@@ -36,6 +38,7 @@ export function CityView({
     stories: string | null;
     storiesEn: string | null;
   };
+  media: CityMediaItem[];
   initialPlaces: CityPlace[];
   initialHasMore: boolean;
 }) {
@@ -72,21 +75,11 @@ export function CityView({
         ))}
       </div>
 
-      <div className="mt-6">
-        <AmapMap
-          center={{ lng: city.lng, lat: city.lat }}
-          zoom={11}
-          height={360}
-          markers={items.map((p) => ({
-            id: p.id,
-            name: localizedName(p, locale),
-            lng: p.lng,
-            lat: p.lat,
-            category: p.category,
-            rating: p.avgRating,
-          }))}
-        />
-      </div>
+      <CityMediaGallery
+        media={media}
+        fallbackCover={city.coverImage}
+        cityName={localizedName(city, locale)}
+      />
 
       <CityCultureView
         data={{

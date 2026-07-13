@@ -22,7 +22,10 @@ export type IconName =
   | "back"
   | "hash"
   | "route"
+  | "share" // 转发 / share
+  | "feedback" // 意见反馈 / feedback
   | "meetup"; // 活动 / meetup
+
 
 // 24x24 viewBox, 1.8 stroke, round caps/joins — a calm, X-like line style.
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -99,7 +102,20 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M8 6h8" />
     </>
   ),
+  share: (
+    <>
+      <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+      <path d="M12 3v13M8 7l4-4 4 4" />
+    </>
+  ),
+  feedback: (
+    <>
+      <path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5Z" />
+      <path d="M8.5 11.5h7M8.5 8.5h7M8.5 14.5h4" />
+    </>
+  ),
 };
+
 
 export function Icon({
   name,

@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { publishPostSchema } from "@/lib/validations";
 import { parseHashtags } from "@/lib/hashtags";
-import { screenContent } from "@/lib/moderation";
+import { screenContentAI } from "@/lib/moderation";
+
 
 // POST /api/publish/post — a signed-in user publishes a travel diary, photo set,
 // or video. Created with moderationStatus = "pending"; it only appears in the
@@ -26,7 +27,8 @@ export async function POST(req: Request) {
 
   const { kind, title, body, cityId, media } = parsed.data;
 
-  const screen = screenContent(title, body);
+  const screen = await screenContentAI(title, body);
+
   if (!screen.ok) {
     return NextResponse.json(
       { error: screen.reason, category: screen.category },

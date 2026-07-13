@@ -92,6 +92,36 @@ export const postSchema = z.object({
   cityId: z.string().optional().or(z.literal("")),
 });
 
+// Toggle a like on a place (mirrors the post-like flow).
+export const placeLikeSchema = z.object({
+  placeId: z.string().min(1),
+});
+
+// A comment on a community post/note.
+export const postCommentSchema = z.object({
+  postId: z.string().min(1),
+  body: z.string().trim().min(1, "Write a comment").max(1000),
+});
+
+// ----------------------- Feedback (意见反馈) -----------------------
+
+export const FEEDBACK_CATEGORIES = ["BUG", "FEATURE", "CONTENT", "OTHER"] as const;
+export type FeedbackCategory = (typeof FEEDBACK_CATEGORIES)[number];
+
+export const feedbackSchema = z.object({
+  category: z.enum(FEEDBACK_CATEGORIES).default("OTHER"),
+  message: z.string().trim().min(1, "Please tell us a bit more").max(2000),
+  // Optional contact email (mainly for signed-out submitters).
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.string().email("Enter a valid email"))
+    .optional()
+    .or(z.literal("")),
+});
+
+
 // ----------------------- Publishing (我要发布) -----------------------
 
 // Kinds of user-published content (the "发布" main button).
