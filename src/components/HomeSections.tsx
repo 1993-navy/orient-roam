@@ -48,6 +48,23 @@ export function HomeSections({
         </div>
       </section>
 
+      {/* AI trip planner — flagship banner right after the discovery hub */}
+      <section className="mt-6">
+        <Link
+          href="/planner"
+          className="group flex items-center gap-4 rounded-2xl bg-gradient-to-r from-rose-600 to-violet-600 p-5 text-white transition-all hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          <span className="text-3xl">🧭</span>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">{t.aiPlanner}</p>
+            <p className="truncate text-sm text-white/80">{t.aiPlannerTagline}</p>
+          </div>
+          <span className="shrink-0 rounded-full bg-white/20 px-3 py-1.5 text-sm font-medium transition-colors group-hover:bg-white/30">
+            {t.aiPlannerCta} →
+          </span>
+        </Link>
+      </section>
+
       <section className="mt-10">
         <h2 className="text-2xl font-bold">{t.chooseCity}</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

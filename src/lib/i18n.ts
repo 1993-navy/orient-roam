@@ -172,6 +172,10 @@ export type UIStrings = {
   reportThanks: string;
   full: string;
   noMeetupsMine: string;
+  // AI trip planner
+  aiPlanner: string;
+  aiPlannerTagline: string;
+  aiPlannerCta: string;
   // Group pooling
   groupPools: string;
   poolsSubtitle: string;
@@ -205,6 +209,21 @@ export type UIStrings = {
   publishMediaUrls: string;
   publishAddMedia: string;
   publishLoginRequired: string;
+  // Drafts (草稿)
+  publishSaveDraft: string;
+  publishDraftSaved: string;
+  publishDrafts: string;
+  publishResume: string;
+  publishUntitled: string;
+  publishDelete: string;
+  // Address → map picker
+  placeAddress: string;
+  placeAddressPlaceholder: string;
+  placeMapLabel: string;
+  placeLocateOnMap: string;
+  placeLocated: string;
+  placeLocateHint: string;
+  placeDragHint: string;
   moderationPending: string;
   approve: string;
   reject: string;
@@ -329,6 +348,9 @@ const BASE: Record<"en" | "zh", UIStrings> = {
     reportThanks: "Thanks — our team will review this.",
     full: "Full",
     noMeetupsMine: "You haven't hosted or joined any meetups yet.",
+    aiPlanner: "AI Trip Planner",
+    aiPlannerTagline: "Tell us your tastes — get a day-by-day route made for you",
+    aiPlannerCta: "Plan my trip",
     groupPools: "Group Pools",
     poolsSubtitle: "Team up to hit a group-buy threshold — split bulk buys & deals",
     createPool: "Start a pool",
@@ -360,6 +382,19 @@ const BASE: Record<"en" | "zh", UIStrings> = {
     publishMediaUrls: "Image / video URLs",
     publishAddMedia: "Add another URL",
     publishLoginRequired: "Sign in to publish",
+    publishSaveDraft: "Save draft",
+    publishDraftSaved: "Draft saved.",
+    publishDrafts: "Unfinished drafts",
+    publishResume: "Resume",
+    publishUntitled: "Untitled",
+    publishDelete: "Delete",
+    placeAddress: "Address",
+    placeAddressPlaceholder: "e.g. 8 Guanghua Rd, Chaoyang District",
+    placeMapLabel: "Location on map",
+    placeLocateOnMap: "Locate on map",
+    placeLocated: "Located",
+    placeLocateHint: "Enter the address above, then tap “Locate on map” — or tap the map to drop a pin.",
+    placeDragHint: "drag the pin to fine-tune",
     moderationPending: "Pending submissions",
     approve: "Approve",
     reject: "Reject",
@@ -477,6 +512,9 @@ const BASE: Record<"en" | "zh", UIStrings> = {
     reportThanks: "已收到，我们会尽快审核。",
     full: "已满",
     noMeetupsMine: "你还没有发起或报名任何约饭。",
+    aiPlanner: "AI 路线规划",
+    aiPlannerTagline: "说说你的偏好，生成专属你的逐日路线",
+    aiPlannerCta: "规划我的行程",
     groupPools: "拼团",
     poolsSubtitle: "凑齐人数享团购价——拼单、分摊、薅羊毛",
     createPool: "发起拼团",
@@ -508,6 +546,19 @@ const BASE: Record<"en" | "zh", UIStrings> = {
     publishMediaUrls: "图片 / 视频链接",
     publishAddMedia: "再添加一个链接",
     publishLoginRequired: "登录后即可发布",
+    publishSaveDraft: "保存草稿",
+    publishDraftSaved: "草稿已保存。",
+    publishDrafts: "未完成的草稿",
+    publishResume: "继续编辑",
+    publishUntitled: "未命名",
+    publishDelete: "删除",
+    placeAddress: "地址",
+    placeAddressPlaceholder: "例如：朝阳区光华路 8 号",
+    placeMapLabel: "地图位置",
+    placeLocateOnMap: "在地图上定位",
+    placeLocated: "已定位",
+    placeLocateHint: "在上方填写地址后点「在地图上定位」，也可以直接点击地图选点。",
+    placeDragHint: "拖动标记可微调",
     moderationPending: "待审核内容",
     approve: "通过",
     reject: "拒绝",
@@ -552,6 +603,9 @@ const OVERRIDES: Record<Exclude<Locale, "en" | "zh">, Partial<UIStrings>> = {
     feed: "Actualité",
     meetupsNav: "Rencontres",
     findMeetups: "Trouver des rencontres",
+    aiPlanner: "Planificateur IA",
+    aiPlannerTagline: "Dites-nous vos goûts — un itinéraire jour par jour rien que pour vous",
+    aiPlannerCta: "Planifier",
     groupPools: "Achats groupés",
     publish: "Publier",
     publishTitle: "Publier du contenu",
@@ -595,6 +649,9 @@ const OVERRIDES: Record<Exclude<Locale, "en" | "zh">, Partial<UIStrings>> = {
     feed: "Novedades",
     meetupsNav: "Quedadas",
     findMeetups: "Buscar quedadas",
+    aiPlanner: "Planificador IA",
+    aiPlannerTagline: "Cuéntanos tus gustos — una ruta día a día hecha para ti",
+    aiPlannerCta: "Planificar viaje",
     groupPools: "Compras en grupo",
     publish: "Publicar",
     publishTitle: "Publicar algo",
@@ -638,6 +695,9 @@ const OVERRIDES: Record<Exclude<Locale, "en" | "zh">, Partial<UIStrings>> = {
     feed: "フィード",
     meetupsNav: "ミートアップ",
     findMeetups: "ミートアップを探す",
+    aiPlanner: "AI旅行プラン",
+    aiPlannerTagline: "好みを教えてください — あなただけの日別ルートを作成",
+    aiPlannerCta: "プランを作る",
     groupPools: "共同購入",
     publish: "投稿",
     publishTitle: "投稿する",
@@ -681,6 +741,9 @@ const OVERRIDES: Record<Exclude<Locale, "en" | "zh">, Partial<UIStrings>> = {
     feed: "المستجدات",
     meetupsNav: "اللقاءات",
     findMeetups: "ابحث عن لقاءات",
+    aiPlanner: "مخطط الرحلات بالذكاء الاصطناعي",
+    aiPlannerTagline: "أخبرنا بأذواقك — واحصل على مسار يومي مصمم لك",
+    aiPlannerCta: "خطّط رحلتي",
     groupPools: "الشراء الجماعي",
     publish: "نشر",
     publishTitle: "انشر شيئًا",
@@ -724,6 +787,9 @@ const OVERRIDES: Record<Exclude<Locale, "en" | "zh">, Partial<UIStrings>> = {
     feed: "Novidades",
     meetupsNav: "Encontros",
     findMeetups: "Encontrar encontros",
+    aiPlanner: "Planejador de IA",
+    aiPlannerTagline: "Conte-nos seus gostos — um roteiro diário feito para você",
+    aiPlannerCta: "Planejar viagem",
     groupPools: "Compras em grupo",
     publish: "Publicar",
     publishTitle: "Publicar algo",
