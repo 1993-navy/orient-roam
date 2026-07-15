@@ -140,6 +140,7 @@ STRICT RULES:
 - Respect dietary restrictions absolutely — never suggest a food that violates them.
 - Group nearby activities into the same day to minimise travel. Match the number of activities to the requested pace (relaxed=2-3/day, balanced=3-4/day, packed=4-5/day).
 - Every day must include meals appropriate to the traveller's cuisine likes and restrictions.
+- Do NOT repeat the same restaurant or the same dish across meals — every meal across the whole trip must be a different place/dish. Vary cuisines and venues so no two meals are identical.
 - Write all human-readable text in clear, friendly English.
 Respond with ONLY a compact JSON object, no markdown fences, in exactly this shape:
 {"summary":"...","tips":["..."],"days":[{"day":1,"theme":"...","activities":[{"time":"Morning","title":"...","placeId":"<id or null>","detail":"..."}],"meals":[{"meal":"breakfast|lunch|dinner","title":"...","placeId":"<id or null>","detail":"..."}]}]}`;
@@ -302,7 +303,25 @@ function fallbackItinerary(
   const perDay = PACE_PER_DAY[prefs.pace];
   const days: ItineraryDay[] = [];
   let si = 0;
-  let fi = 0;
+
+  // Meal picking that never repeats a place/dish while unused options remain,
+  // and — once the pool is exhausted — never lands on the same place two meals
+  // in a row. So no traveller sees the identical restaurant meal after meal.
+  const usedFoodIds = new Set<string>();
+  let lastFoodId: string | null = null;
+  const nextFood = (): PlannerPlace | null => {
+    if (foods.length === 0) return null;
+    // Prefer a place we haven't used yet.
+    let pick = foods.find((p) => !usedFoodIds.has(p.id));
+    if (!pick) {
+      // Every place used at least once: reset, but avoid an immediate repeat.
+      usedFoodIds.clear();
+      pick = foods.find((p) => p.id !== lastFoodId) ?? foods[0];
+    }
+    usedFoodIds.add(pick.id);
+    lastFoodId = pick.id;
+    return pick;
+  };
 
   for (let d = 0; d < prefs.days; d++) {
     const slots = ["Morning", "Afternoon", "Evening"];
@@ -321,7 +340,8 @@ function fallbackItinerary(
     }
 
     const pickFood = (meal: ItineraryMeal["meal"]): ItineraryMeal => {
-      if (foods.length === 0) {
+      const p = nextFood();
+      if (!p) {
         return {
           meal,
           title: prefs.cuisineLikes ? `Local ${prefs.cuisineLikes}` : "Local cuisine",
@@ -329,8 +349,6 @@ function fallbackItinerary(
           detail: prefs.dietary ? `Keep in mind: ${prefs.dietary}.` : "Ask staff for foreigner-friendly options.",
         };
       }
-      const p = foods[fi % foods.length];
-      fi++;
       return {
         meal,
         title: p.name,

@@ -128,6 +128,15 @@ export const feedbackSchema = z.object({
 export const PUBLISH_KINDS = ["FOOD", "ATTRACTION", "DIARY", "PHOTO", "VIDEO"] as const;
 export type PublishKind = (typeof PUBLISH_KINDS)[number];
 
+// Content length limits, expressed in characters. The product spec is in
+// "English words"; we approximate ~6 characters per word (word + separator) so
+// mixed Chinese/English text is treated fairly.
+//   3000 words → ~18000 chars (food / attraction descriptions)
+//   5000 words → ~30000 chars (travel diaries)
+export const PLACE_DESCRIPTION_MAX = 18000;
+export const DIARY_BODY_MAX = 30000;
+export const MEDIA_BODY_MAX = 5000; // photo / video posts keep the tighter cap
+
 // User-submitted place (restaurant / attraction). Mirrors placeCreateSchema but
 // only exposes the FOOD / ATTRACTION categories a normal user can publish.
 export const publishPlaceSchema = z.object({
@@ -138,7 +147,24 @@ export const publishPlaceSchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),
   address: z.string().max(200).optional().or(z.literal("")),
-  description: z.string().max(1000).optional().or(z.literal("")),
+  description: z.string().max(PLACE_DESCRIPTION_MAX).optional().or(z.literal("")),
+  priceLevel: z.coerce.number().int().min(1).max(4).default(2),
+});
+
+// Draft variant of a place submission: everything is optional so a user can
+// stash a half-filled form. Coordinates may be blank (the map picker hasn't run
+// yet). Kept separate from publishPlaceSchema so the "publish" path still
+// enforces the full requirements.
+export const publishPlaceDraftSchema = z.object({
+  id: z.string().optional().or(z.literal("")),
+  category: z.enum(["FOOD", "ATTRACTION"]),
+  name: z.string().trim().max(120).optional().or(z.literal("")),
+  nameEn: z.string().trim().max(120).optional().or(z.literal("")),
+  cityId: z.string().optional().or(z.literal("")),
+  lat: z.coerce.number().min(-90).max(90).optional().or(z.nan()),
+  lng: z.coerce.number().min(-180).max(180).optional().or(z.nan()),
+  address: z.string().max(200).optional().or(z.literal("")),
+  description: z.string().max(PLACE_DESCRIPTION_MAX).optional().or(z.literal("")),
   priceLevel: z.coerce.number().int().min(1).max(4).default(2),
 });
 
@@ -150,13 +176,21 @@ export const publishMediaSchema = z.object({
 
 // User-published post: travel diary / photo / video set. `kind` decides which
 // fields matter; media holds external URLs (no upload in this iteration).
+// Travel diaries allow a much longer body (5000 words ≈ 30000 chars) than the
+// media posts, which stay at the shorter cap.
 export const publishPostSchema = z
   .object({
     kind: z.enum(["DIARY", "PHOTO", "VIDEO"]),
     title: z.string().trim().max(120).optional().or(z.literal("")),
-    body: z.string().trim().max(5000).optional().or(z.literal("")),
+    body: z.string().trim().max(DIARY_BODY_MAX).optional().or(z.literal("")),
     cityId: z.string().optional().or(z.literal("")),
     media: z.array(publishMediaSchema).max(9).default([]),
+  })
+  // Enforce the per-kind body length: diaries get DIARY_BODY_MAX, everything
+  // else the tighter MEDIA_BODY_MAX.
+  .refine((d) => d.kind === "DIARY" || (d.body ?? "").length <= MEDIA_BODY_MAX, {
+    message: `Text is too long (max ${MEDIA_BODY_MAX} characters)`,
+    path: ["body"],
   })
   .refine((d) => (d.body && d.body.trim().length > 0) || d.media.length > 0, {
     message: "Add some text or at least one photo/video",
@@ -167,6 +201,17 @@ export const publishPostSchema = z
     message: "Add at least one media URL",
     path: ["media"],
   });
+
+// Draft variant of a post submission: no cross-field requirements so a user can
+// save a half-written diary with no media, or media with no text.
+export const publishPostDraftSchema = z.object({
+  id: z.string().optional().or(z.literal("")),
+  kind: z.enum(["DIARY", "PHOTO", "VIDEO"]),
+  title: z.string().trim().max(120).optional().or(z.literal("")),
+  body: z.string().trim().max(DIARY_BODY_MAX).optional().or(z.literal("")),
+  cityId: z.string().optional().or(z.literal("")),
+  media: z.array(publishMediaSchema).max(9).default([]),
+});
 
 
 export const PLACE_CATEGORIES = [

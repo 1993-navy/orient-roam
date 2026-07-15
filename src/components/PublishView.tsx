@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useLang } from "@/components/LanguageProvider";
+import { PlacePicker } from "@/components/PlacePicker";
+import { DIARY_BODY_MAX, MEDIA_BODY_MAX, PLACE_DESCRIPTION_MAX } from "@/lib/validations";
 
 type City = { id: string; nameEn: string; name: string };
 
@@ -12,6 +14,28 @@ type City = { id: string; nameEn: string; name: string };
 // Places; diaries / photos / videos become pending Posts. Everything is held
 // for review before it goes live.
 type Kind = "FOOD" | "ATTRACTION" | "DIARY" | "PHOTO" | "VIDEO";
+
+// A draft loaded back from the server to resume editing.
+type PostDraft = {
+  id: string;
+  kind: "DIARY" | "PHOTO" | "VIDEO";
+  title: string | null;
+  body: string;
+  cityId: string | null;
+  media: { url: string; type: string }[];
+};
+type PlaceDraft = {
+  id: string;
+  category: "FOOD" | "ATTRACTION";
+  name: string;
+  nameEn: string;
+  cityId: string | null;
+  lat: number;
+  lng: number;
+  address: string | null;
+  description: string | null;
+  priceLevel: number;
+};
 
 const field =
   "mt-1 w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-rose-400 dark:border-neutral-700 dark:bg-neutral-950";
@@ -21,6 +45,25 @@ export function PublishView({ cities }: { cities: City[] }) {
   const { t, locale } = useLang();
   const { status } = useSession();
   const [kind, setKind] = useState<Kind | null>(null);
+  // A draft the user chose to resume — passed into the matching form.
+  const [editingPost, setEditingPost] = useState<PostDraft | null>(null);
+  const [editingPlace, setEditingPlace] = useState<PlaceDraft | null>(null);
+
+  const [postDrafts, setPostDrafts] = useState<PostDraft[]>([]);
+  const [placeDrafts, setPlaceDrafts] = useState<PlaceDraft[]>([]);
+
+  const loadDrafts = useCallback(async () => {
+    const res = await fetch("/api/publish/drafts");
+    if (!res.ok) return;
+    const data = await res.json().catch(() => null);
+    if (!data) return;
+    setPostDrafts(data.posts ?? []);
+    setPlaceDrafts(data.places ?? []);
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") loadDrafts();
+  }, [status, loadDrafts]);
 
   if (status === "unauthenticated") {
     return (
@@ -45,6 +88,29 @@ export function PublishView({ cities }: { cities: City[] }) {
     { kind: "VIDEO", emoji: "🎬", label: t.publishVideo },
   ];
 
+  function resumePost(d: PostDraft) {
+    setEditingPlace(null);
+    setEditingPost(d);
+    setKind(d.kind);
+  }
+  function resumePlace(d: PlaceDraft) {
+    setEditingPost(null);
+    setEditingPlace(d);
+    setKind(d.category);
+  }
+  async function discardDraft(type: "post" | "place", id: string) {
+    await fetch(`/api/publish/drafts?type=${type}&id=${id}`, { method: "DELETE" });
+    loadDrafts();
+  }
+  // When a form starts fresh (type button clicked) clear any resumed draft.
+  function chooseType(k: Kind) {
+    setEditingPost(null);
+    setEditingPlace(null);
+    setKind(k);
+  }
+
+  const hasDrafts = postDrafts.length > 0 || placeDrafts.length > 0;
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
       <h1 className="text-2xl font-bold">📢 {t.publishTitle}</h1>
@@ -54,6 +120,38 @@ export function PublishView({ cities }: { cities: City[] }) {
         🛡 {t.publishReviewNotice}
       </div>
 
+      {hasDrafts && (
+        <div className="mt-6 rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
+          <p className={lbl}>📝 {t.publishDrafts}</p>
+          <ul className="mt-2 space-y-2">
+            {placeDrafts.map((d) => (
+              <li key={d.id} className="flex items-center gap-2 rounded-lg bg-neutral-50 px-3 py-2 text-sm dark:bg-neutral-900">
+                <span>{d.category === "FOOD" ? "🍜" : "🏯"}</span>
+                <span className="flex-1 truncate">{d.nameEn || d.name || t.publishUntitled}</span>
+                <button type="button" onClick={() => resumePlace(d)} className="font-medium text-rose-600 hover:underline">
+                  {t.publishResume}
+                </button>
+                <button type="button" onClick={() => discardDraft("place", d.id)} className="text-neutral-400 hover:text-rose-600">
+                  {t.publishDelete}
+                </button>
+              </li>
+            ))}
+            {postDrafts.map((d) => (
+              <li key={d.id} className="flex items-center gap-2 rounded-lg bg-neutral-50 px-3 py-2 text-sm dark:bg-neutral-900">
+                <span>{d.kind === "DIARY" ? "📔" : d.kind === "PHOTO" ? "🖼️" : "🎬"}</span>
+                <span className="flex-1 truncate">{d.title || t.publishUntitled}</span>
+                <button type="button" onClick={() => resumePost(d)} className="font-medium text-rose-600 hover:underline">
+                  {t.publishResume}
+                </button>
+                <button type="button" onClick={() => discardDraft("post", d.id)} className="text-neutral-400 hover:text-rose-600">
+                  {t.publishDelete}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="mt-6">
         <p className={lbl}>{t.publishChooseType}</p>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -61,7 +159,7 @@ export function PublishView({ cities }: { cities: City[] }) {
             <button
               key={ty.kind}
               type="button"
-              onClick={() => setKind(ty.kind)}
+              onClick={() => chooseType(ty.kind)}
               className={`flex flex-col items-center gap-1 rounded-xl border px-3 py-4 text-sm font-medium transition ${
                 kind === ty.kind
                   ? "border-rose-500 bg-rose-50 text-rose-600 dark:bg-rose-950/40"
@@ -78,9 +176,21 @@ export function PublishView({ cities }: { cities: City[] }) {
       {kind && (
         <div className="mt-6">
           {kind === "FOOD" || kind === "ATTRACTION" ? (
-            <PlaceForm category={kind} cities={cities} />
+            <PlaceForm
+              key={editingPlace?.id ?? "new-place"}
+              category={kind}
+              cities={cities}
+              draft={editingPlace}
+              onSavedDraft={loadDrafts}
+            />
           ) : (
-            <PostForm kind={kind} cities={cities} />
+            <PostForm
+              key={editingPost?.id ?? "new-post"}
+              kind={kind}
+              cities={cities}
+              draft={editingPost}
+              onSavedDraft={loadDrafts}
+            />
           )}
         </div>
       )}
@@ -98,25 +208,49 @@ export function PublishView({ cities }: { cities: City[] }) {
 function PlaceForm({
   category,
   cities,
+  draft,
+  onSavedDraft,
 }: {
   category: "FOOD" | "ATTRACTION";
   cities: City[];
+  draft: PlaceDraft | null;
+  onSavedDraft: () => void;
 }) {
   const { t } = useLang();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  // Track the draft id so repeated "save draft" updates the same row.
+  const [draftId, setDraftId] = useState<string | null>(draft?.id ?? null);
   const [f, setF] = useState({
-    name: "",
-    nameEn: "",
-    cityId: cities[0]?.id ?? "",
-    lat: "",
-    lng: "",
-    priceLevel: 2,
-    address: "",
-    description: "",
+    name: draft?.name ?? "",
+    nameEn: draft?.nameEn ?? "",
+    cityId: draft?.cityId ?? cities[0]?.id ?? "",
+    lat: draft?.lat && draft.lat !== 0 ? draft.lat : (null as number | null),
+    lng: draft?.lng && draft.lng !== 0 ? draft.lng : (null as number | null),
+    priceLevel: draft?.priceLevel ?? 2,
+    address: draft?.address ?? "",
+    description: draft?.description ?? "",
   });
+
+  const cityName = cities.find((c) => c.id === f.cityId)?.name;
+
+  function payload() {
+    return {
+      id: draftId ?? undefined,
+      category,
+      name: f.name,
+      nameEn: f.nameEn,
+      cityId: f.cityId,
+      lat: f.lat ?? undefined,
+      lng: f.lng ?? undefined,
+      priceLevel: f.priceLevel,
+      address: f.address,
+      description: f.description,
+    };
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -125,7 +259,7 @@ function PlaceForm({
     const res = await fetch("/api/publish/place", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...f, category }),
+      body: JSON.stringify(payload()),
     });
     setBusy(false);
     if (res.ok) {
@@ -133,6 +267,25 @@ function PlaceForm({
       setMsg(t.publishPending);
     } else {
       const data = await res.json().catch(() => ({}));
+      setMsg(data.error ?? "Failed");
+    }
+  }
+
+  async function saveDraft() {
+    setSavingDraft(true);
+    setMsg(null);
+    const res = await fetch("/api/publish/place?draft=1", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload()),
+    });
+    setSavingDraft(false);
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      if (data.id) setDraftId(data.id);
+      setMsg(t.publishDraftSaved);
+      onSavedDraft();
+    } else {
       setMsg(data.error ?? "Failed");
     }
   }
@@ -177,31 +330,56 @@ function PlaceForm({
           <label className={lbl}>{t.price} (1–4)</label>
           <input type="number" min={1} max={4} value={f.priceLevel} onChange={(e) => setF({ ...f, priceLevel: Number(e.target.value) })} className={field} />
         </div>
-        <div>
-          <label className={lbl}>Latitude (高德)</label>
-          <input inputMode="decimal" value={f.lat} onChange={(e) => setF({ ...f, lat: e.target.value })} placeholder="39.918" className={field} />
-        </div>
-        <div>
-          <label className={lbl}>Longitude (高德)</label>
-          <input inputMode="decimal" value={f.lng} onChange={(e) => setF({ ...f, lng: e.target.value })} placeholder="116.397" className={field} />
-        </div>
         <div className="sm:col-span-2">
-          <label className={lbl}>{t.placeOptional}</label>
-          <input value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} className={field} />
+          <label className={lbl}>{t.placeAddress}</label>
+          <input
+            value={f.address}
+            onChange={(e) => setF({ ...f, address: e.target.value })}
+            placeholder={t.placeAddressPlaceholder}
+            className={field}
+          />
         </div>
       </div>
+
+      {/* Address → map: geocode the address and let the user fine-tune the pin. */}
+      <div>
+        <label className={lbl}>{t.placeMapLabel}</label>
+        <div className="mt-1">
+          <PlacePicker
+            address={f.address}
+            cityName={cityName}
+            lat={f.lat}
+            lng={f.lng}
+            onChange={({ lat, lng }) => setF((prev) => ({ ...prev, lat, lng }))}
+          />
+        </div>
+      </div>
+
       <div>
         <label className={lbl}>{t.publishBodyField}</label>
-        <textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} rows={3} className={field} />
+        <textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} rows={4} maxLength={PLACE_DESCRIPTION_MAX} className={field} />
+        <p className="mt-1 text-right text-xs text-neutral-400">
+          {f.description.length} / {PLACE_DESCRIPTION_MAX}
+        </p>
       </div>
       {msg && <p className="text-sm text-rose-600">{msg}</p>}
-      <button
-        type="submit"
-        disabled={busy || !f.nameEn || !f.name || !f.lat || !f.lng}
-        className="rounded-full bg-rose-600 px-5 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
-      >
-        {busy ? "…" : t.publishSubmit}
-      </button>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="submit"
+          disabled={busy || !f.nameEn || !f.name || f.lat == null || f.lng == null}
+          className="rounded-full bg-rose-600 px-5 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+        >
+          {busy ? "…" : t.publishSubmit}
+        </button>
+        <button
+          type="button"
+          onClick={saveDraft}
+          disabled={savingDraft}
+          className="rounded-full border border-neutral-300 px-5 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-60 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800"
+        >
+          {savingDraft ? "…" : t.publishSaveDraft}
+        </button>
+      </div>
     </form>
   );
 }
@@ -210,39 +388,53 @@ function PlaceForm({
 function PostForm({
   kind,
   cities,
+  draft,
+  onSavedDraft,
 }: {
   kind: "DIARY" | "PHOTO" | "VIDEO";
   cities: City[];
+  draft: PostDraft | null;
+  onSavedDraft: () => void;
 }) {
   const { t } = useLang();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [cityId, setCityId] = useState("");
-  const [urls, setUrls] = useState<string[]>([""]);
+  const [draftId, setDraftId] = useState<string | null>(draft?.id ?? null);
+  const [title, setTitle] = useState(draft?.title ?? "");
+  const [body, setBody] = useState(draft?.body ?? "");
+  const [cityId, setCityId] = useState(draft?.cityId ?? "");
+  const [urls, setUrls] = useState<string[]>(
+    draft && draft.media.length > 0 ? draft.media.map((m) => m.url) : [""],
+  );
 
   const mediaType = kind === "VIDEO" ? "VIDEO" : "IMAGE";
   const needsMedia = kind !== "DIARY";
+  // Diaries get the long limit (5000 words); photo / video posts keep 5000 chars.
+  const bodyMax = kind === "DIARY" ? DIARY_BODY_MAX : MEDIA_BODY_MAX;
 
   function setUrl(i: number, v: string) {
     setUrls((prev) => prev.map((u, idx) => (idx === i ? v : u)));
+  }
+
+  function payload() {
+    const media = urls
+      .map((u) => u.trim())
+      .filter(Boolean)
+      .map((url) => ({ url, type: mediaType }));
+    return { id: draftId ?? undefined, kind, title, body, cityId, media };
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
-    const media = urls
-      .map((u) => u.trim())
-      .filter(Boolean)
-      .map((url) => ({ url, type: mediaType }));
     const res = await fetch("/api/publish/post", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kind, title, body, cityId, media }),
+      body: JSON.stringify(payload()),
     });
     setBusy(false);
     if (res.ok) {
@@ -250,6 +442,25 @@ function PostForm({
       setMsg(t.publishPending);
     } else {
       const data = await res.json().catch(() => ({}));
+      setMsg(data.error ?? "Failed");
+    }
+  }
+
+  async function saveDraft() {
+    setSavingDraft(true);
+    setMsg(null);
+    const res = await fetch("/api/publish/post?draft=1", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload()),
+    });
+    setSavingDraft(false);
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      if (data.id) setDraftId(data.id);
+      setMsg(t.publishDraftSaved);
+      onSavedDraft();
+    } else {
       setMsg(data.error ?? "Failed");
     }
   }
@@ -277,7 +488,10 @@ function PostForm({
       </div>
       <div>
         <label className={lbl}>{t.publishBodyField}</label>
-        <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} maxLength={5000} className={field} />
+        <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={kind === "DIARY" ? 12 : 5} maxLength={bodyMax} className={field} />
+        <p className="mt-1 text-right text-xs text-neutral-400">
+          {body.length} / {bodyMax}
+        </p>
       </div>
       <div>
         <label className={lbl}>{t.anyCity}</label>
@@ -317,13 +531,23 @@ function PostForm({
       </div>
 
       {msg && <p className="text-sm text-rose-600">{msg}</p>}
-      <button
-        type="submit"
-        disabled={busy || (needsMedia && !urls.some((u) => u.trim())) || (kind === "DIARY" && !body.trim())}
-        className="rounded-full bg-rose-600 px-5 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
-      >
-        {busy ? "…" : t.publishSubmit}
-      </button>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="submit"
+          disabled={busy || (needsMedia && !urls.some((u) => u.trim())) || (kind === "DIARY" && !body.trim())}
+          className="rounded-full bg-rose-600 px-5 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+        >
+          {busy ? "…" : t.publishSubmit}
+        </button>
+        <button
+          type="button"
+          onClick={saveDraft}
+          disabled={savingDraft}
+          className="rounded-full border border-neutral-300 px-5 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-60 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800"
+        >
+          {savingDraft ? "…" : t.publishSaveDraft}
+        </button>
+      </div>
     </form>
   );
 }

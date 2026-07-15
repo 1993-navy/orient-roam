@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AmapMap } from "@/components/AmapMap";
+import { OsmMap } from "@/components/OsmMap";
 import { PlaceCard, type PlaceCardData } from "@/components/PlaceCard";
 import { Icon } from "@/components/Icon";
 import { useLang } from "@/components/LanguageProvider";
@@ -182,7 +182,7 @@ export function ExploreView({
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="lg:order-2">
           <div className="lg:sticky lg:top-44">
-            <AmapMap
+            <OsmMap
               center={center}
               zoom={mapZoom}
               height={480}

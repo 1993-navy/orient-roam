@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AmapMap } from "@/components/AmapMap";
+import { OsmMap } from "@/components/OsmMap";
 import { RatingStars } from "@/components/RatingStars";
 import { ReviewForm } from "@/components/ReviewForm";
 import { AddToTripButton } from "@/components/AddToTripButton";
@@ -140,7 +140,7 @@ export function PlaceDetailView({
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div>
-          <AmapMap
+          <OsmMap
             center={{ lng: place.lng, lat: place.lat }}
             zoom={14}
             height={300}
